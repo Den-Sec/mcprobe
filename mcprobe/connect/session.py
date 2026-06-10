@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 from mcprobe.models import ToolInfo
 
@@ -33,6 +34,14 @@ class Session:
 async def stdio_session(command):
     params = StdioServerParameters(command=command[0], args=command[1:])
     async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as cs:
+            await cs.initialize()
+            yield Session(cs)
+
+
+@asynccontextmanager
+async def http_session(url, headers=None):
+    async with streamablehttp_client(url, headers=headers or {}) as (read, write, *_):
         async with ClientSession(read, write) as cs:
             await cs.initialize()
             yield Session(cs)
