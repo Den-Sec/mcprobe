@@ -58,3 +58,21 @@ async def test_engine_defers_oob_eval_for_delayed_callback():
                                   transport="http", oob_wait=0)
     assert any(f.check in ("ssrf", "cmd_injection") and f.confidence.value == "confirmed"
                for f in findings)
+
+
+import sys
+from pathlib import Path
+from mcprobe.connect.session import stdio_session
+import mcprobe.checks  # noqa: F401  (register checks)
+
+_SERVER = str(Path(__file__).parent / "fixtures" / "vuln_server" / "server.py")
+
+
+@pytest.mark.asyncio
+async def test_scan_confirms_nested_array_enum_traversal():
+    async with stdio_session([sys.executable, _SERVER]) as session:
+        findings = await scan_session(session, oob=None, transport="stdio")
+    confirmed = {(f.check, f.param) for f in findings if f.confidence.value == "confirmed"}
+    assert ("path_traversal", "config.path") in confirmed   # nested object
+    assert ("path_traversal", "paths[0]") in confirmed       # array item
+    assert ("path_traversal", "path") in confirmed           # enum-gated tool (read_mode)
