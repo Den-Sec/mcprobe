@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class OOBProvider(Protocol):
+    def new_token(self) -> tuple[str, str]: ...
+    def interactions(self, token: str) -> list[dict]: ...
