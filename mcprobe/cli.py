@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import os
 import shlex
 
 from mcprobe.report.render import to_json, to_sarif, to_markdown
@@ -41,7 +42,8 @@ async def _run(args):
         oob = InteractshOOB(InteractshClient())
     try:
         if args.stdio:
-            async with stdio_session(shlex.split(args.stdio)) as sess:
+            argv = shlex.split(args.stdio, posix=(os.name != "nt"))
+            async with stdio_session(argv) as sess:
                 findings = await scan_session(sess, oob=oob, transport="stdio")
         else:
             headers = dict(h.split(":", 1) for h in args.header)
