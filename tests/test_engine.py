@@ -135,3 +135,28 @@ def test_aggregate_latency_uses_min():
     from mcprobe.engine import _aggregate_latency
     assert _aggregate_latency([0.5, 0.1]) == 0.1
     assert _aggregate_latency([]) == 0.0
+
+
+_SLOW_SERVER = str(Path(__file__).parent / "fixtures" / "slow_server" / "server.py")
+_SECRET_SERVER = str(Path(__file__).parent / "fixtures" / "secret_server" / "server.py")
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_slow_safe_tool_no_time_based_fp():
+    # Real ~6s tool. A fixed-5s oracle would false-fire; the calibrated relative
+    # oracle must report NOTHING. (Slow: ~24s. Run with -m "not slow" to skip.)
+    async with stdio_session([sys.executable, _SLOW_SERVER]) as session:
+        findings = await scan_session(session, oob=None, transport="stdio",
+                                      check_ids=["cmd_injection"])
+    assert findings == []
+
+
+@pytest.mark.asyncio
+async def test_docs_secret_tool_no_info_leak_fp():
+    # Tool whose benign output always contains secret-shaped strings. Because the
+    # calibration baseline contains the same secrets, the probe triggers no diff.
+    async with stdio_session([sys.executable, _SECRET_SERVER]) as session:
+        findings = await scan_session(session, oob=None, transport="stdio",
+                                      check_ids=["info_leak"])
+    assert findings == []
