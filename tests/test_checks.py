@@ -92,3 +92,22 @@ def test_cmdi_firm_on_time_delay():
     time_probe.meta["elapsed"] = 6.0
     f = c.evaluate(time_probe, "", ctx)
     assert f is not None and f.confidence.value == "firm"
+
+
+# --- Task 9: ssrf ---
+from mcprobe.checks.ssrf import SSRF
+
+def test_ssrf_injects_oob_url_and_confirms():
+    s = SSRF()
+    ctx = CheckContext(call_tool=lambda n, a: "", oob=FakeOOB(hit_token="tok123"), transport="http")
+    point = InjectionPoint("fetch", "url", {"url": "mcprobe"}, "url")
+    probe = s.generate(point, ctx)[0]
+    assert probe.args["url"].startswith("http://oob/")
+    f = s.evaluate(probe, "", ctx)
+    assert f is not None and f.cwe == "CWE-918" and f.confidence.value == "confirmed"
+
+def test_ssrf_skipped_without_oob():
+    s = SSRF()
+    ctx = CheckContext(call_tool=lambda n, a: "", oob=None, transport="http")
+    point = InjectionPoint("fetch", "url", {"url": "mcprobe"}, "url")
+    assert s.generate(point, ctx) == []
