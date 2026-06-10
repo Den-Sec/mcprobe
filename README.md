@@ -4,7 +4,8 @@
 
 mcprobe enumerates the tools exposed by a Model Context Protocol (MCP) server,
 maps their parameters to injection points, fires targeted payloads, and reports
-**only the vulnerabilities it can actively confirm**.
+each finding with a **confidence level earned by a concrete oracle** - prioritising
+actively-confirmed, exploitable issues over guesses.
 
 ## Why mcprobe
 
@@ -12,12 +13,13 @@ Most "MCP security" tooling is either a generic fuzzer (noisy, low-signal) or a
 defensive/static analyzer (looks at config and source, never proves exploitability).
 mcprobe is different:
 
-- **Confirmation oracles, not guesses.** Every finding is backed by a concrete
-  signal: an **out-of-band (OOB)** callback, a **time-based** delay, or a
-  **canary** value reflected in the response. If the oracle does not fire, no
-  finding is emitted.
-- **Confirmed-only findings.** The report contains exploitable issues, not
-  "potential" ones. This keeps false positives out of your SARIF and your inbox.
+- **Oracle-backed, not guesses.** Every finding is tied to a concrete signal: an
+  **out-of-band (OOB)** callback, a **calibrated time** delay, a **canary** value
+  reflected in the response, or a **baseline diff**. No signal, no finding.
+- **Graded, calibrated confidence.** Findings carry an explicit confidence level
+  (**CONFIRMED / FIRM / TENTATIVE**, see [Confidence levels](#confidence-levels)).
+  Per-tool baseline calibration suppresses the usual false-positive classes - a
+  slow-but-safe tool, or output that merely looks secret-shaped, is not flagged.
 - **Both transports.** Works against MCP servers over **stdio** (local process)
   and **streamable HTTP** (remote endpoint, with custom headers/auth).
 
@@ -70,6 +72,19 @@ makes the target reach back to a listener mcprobe controls.
   `--oob local` instead. No specific pip package is bundled or required.
 - `--oob none` disables OOB confirmation; only time-based and canary oracles run.
 
+## Confidence levels
+
+Every finding carries one of three confidence levels, each earned by a specific oracle:
+
+| Level | Meaning | How it's earned |
+| ---------- | --------------------------------------------------- | --------------- |
+| **CONFIRMED** | The payload provably executed, or protected data was reached. | An out-of-band callback fired (cmd injection, SSRF), a canary value was read back (path traversal), or an unauthenticated call returned the protected data (auth bypass). |
+| **FIRM** | A calibrated signal strongly indicates the issue, short of an OOB proof. | A response delay exceeds the per-tool calibrated baseline by the injected sleep (time-based cmd injection), or a secret-shaped string appears in the probe response but not in the benign baseline (info leak). |
+| **TENTATIVE** | Pattern-only match, with no calibration to corroborate it. | A secret-shaped string matched, but no baseline was available to prove the input triggered it - review manually. |
+
+The OOB, canary, and auth-differential checks emit only **CONFIRMED**; the
+timing and info-leak oracles are where **FIRM** and **TENTATIVE** arise.
+
 ## Checks (v1)
 
 | Check            | Vulnerability                  | CWE      |
@@ -89,10 +104,12 @@ how you use this tool.
 
 ## Validation
 
-mcprobe is validated against the bundled deliberately-vulnerable fixture server
-(`tests/fixtures/vuln_server/server.py`) and against public vulnerable MCP labs.
-The fixture exercises command injection, path traversal, and information-leak
-flows end to end.
+mcprobe is validated by an automated test suite against bundled
+deliberately-vulnerable fixture servers in `tests/fixtures/`. The suite exercises
+command injection (including cross-OS cmd.exe / PowerShell payloads), SSRF, path
+traversal, info-leak, nested/array/enum injection points, and the OOB,
+baseline-calibration, and false-positive-suppression paths end to end. See
+[docs/claims-matrix.md](docs/claims-matrix.md) for the claim-to-test mapping.
 
 ## Roadmap
 
