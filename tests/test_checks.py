@@ -156,3 +156,12 @@ def test_all_v1_checks_registered():
     import mcprobe.checks
     from mcprobe.checks.base import REGISTRY
     assert {"path_traversal", "info_leak", "cmd_injection", "ssrf", "auth_bypass"} <= set(REGISTRY)
+
+
+def test_check_context_baseline_defaults_none_and_accepts_value():
+    from mcprobe.checks.base import CheckContext
+    from mcprobe.models import ToolBaseline
+    ctx = CheckContext(oob=None, transport="stdio")
+    assert ctx.baseline is None
+    ctx2 = CheckContext(oob=None, transport="stdio", baseline=ToolBaseline(latency=1.0, response="r"))
+    assert ctx2.baseline.latency == 1.0

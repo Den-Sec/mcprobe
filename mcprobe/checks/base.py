@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Protocol
-from mcprobe.models import InjectionPoint, Probe, Finding
+from mcprobe.models import InjectionPoint, Probe, Finding, ToolBaseline
 
 
 @dataclass
@@ -9,6 +9,7 @@ class CheckContext:
     transport: str
     call_tool: Callable[[str, dict], str] | None = None
     call_tool_unauth: Callable[[str, dict], str] | None = None
+    baseline: ToolBaseline | None = None
 
 
 class Check(Protocol):

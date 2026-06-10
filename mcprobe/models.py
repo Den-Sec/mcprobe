@@ -24,6 +24,12 @@ class ToolInfo:
 
 
 @dataclass
+class ToolBaseline:
+    latency: float
+    response: str
+
+
+@dataclass
 class InjectionPoint:
     tool: str
     json_path: str

@@ -40,3 +40,10 @@ def test_injection_point_set_array():
     p = InjectionPoint(tool="t", json_path="paths[0]", base_args={"paths": ["mcprobe"]},
                        param_name="paths[0]")
     assert p.set("X") == {"paths": ["X"]}
+
+
+def test_tool_baseline_holds_latency_and_response():
+    from mcprobe.models import ToolBaseline
+    b = ToolBaseline(latency=0.42, response="hello")
+    assert b.latency == 0.42
+    assert b.response == "hello"
