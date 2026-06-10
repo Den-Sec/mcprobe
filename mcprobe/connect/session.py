@@ -1,0 +1,38 @@
+from contextlib import asynccontextmanager
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+from mcprobe.models import ToolInfo
+
+
+class Session:
+    def __init__(self, cs):
+        self._cs = cs
+
+    async def list_tools(self):
+        resp = await self._cs.list_tools()
+        return [
+            ToolInfo(
+                name=t.name,
+                description=t.description or "",
+                input_schema=t.inputSchema or {},
+            )
+            for t in resp.tools
+        ]
+
+    async def call_tool(self, name, args):
+        resp = await self._cs.call_tool(name, args)
+        parts = []
+        for c in resp.content:
+            parts.append(getattr(c, "text", "") or "")
+        return "\n".join(parts)
+
+
+@asynccontextmanager
+async def stdio_session(command):
+    params = StdioServerParameters(command=command[0], args=command[1:])
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as cs:
+            await cs.initialize()
+            yield Session(cs)
