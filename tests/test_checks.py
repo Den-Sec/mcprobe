@@ -42,3 +42,18 @@ def test_traversal_none_on_clean_response():
     point = InjectionPoint("read", "path", {"path": "mcprobe"}, "path")
     probe = pt.generate(point, _ctx())[0]
     assert pt.evaluate(probe, "file not found", _ctx()) is None
+
+
+# --- Task 7: info_leak ---
+from mcprobe.checks.info_leak import InfoLeak
+
+
+def test_info_leak_needs_two_markers():
+    il = InfoLeak()
+    point = InjectionPoint("lookup", "q", {"q": "mcprobe"}, "q")
+    probe = il.generate(point, _ctx())[0]
+    one = "AKIAIOSFODNN7EXAMPLE"
+    two = "AKIAIOSFODNN7EXAMPLE\n-----BEGIN PRIVATE KEY-----"
+    assert il.evaluate(probe, one, _ctx()) is None
+    f = il.evaluate(probe, two, _ctx())
+    assert f is not None and f.cwe == "CWE-200"
