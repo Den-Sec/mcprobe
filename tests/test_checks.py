@@ -111,3 +111,31 @@ def test_ssrf_skipped_without_oob():
     ctx = CheckContext(call_tool=lambda n, a: "", oob=None, transport="http")
     point = InjectionPoint("fetch", "url", {"url": "mcprobe"}, "url")
     assert s.generate(point, ctx) == []
+
+
+# --- Task 10: auth_bypass ---
+from mcprobe.checks.auth_bypass import AuthBypass
+
+def test_auth_bypass_skipped_on_stdio_or_no_unauth():
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    stdio = CheckContext(call_tool=lambda n, args: "ok", oob=None, transport="stdio")
+    assert a.generate(point, stdio) == []
+
+def test_auth_bypass_confirmed_when_unauth_succeeds():
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    ctx = CheckContext(call_tool=lambda n, args: "secret data", oob=None, transport="http",
+                       call_tool_unauth=lambda n, args: "secret data")
+    probe = a.generate(point, ctx)[0]
+    f = a.evaluate(probe, "secret data", ctx)
+    assert f is not None and f.cwe == "CWE-306"
+
+def test_auth_bypass_none_when_unauth_denied():
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    def deny(n, args): raise PermissionError("401")
+    ctx = CheckContext(call_tool=lambda n, args: "secret data", oob=None, transport="http",
+                       call_tool_unauth=deny)
+    probe = a.generate(point, ctx)[0]
+    assert a.evaluate(probe, "secret data", ctx) is None
