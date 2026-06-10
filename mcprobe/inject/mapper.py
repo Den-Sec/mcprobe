@@ -70,6 +70,11 @@ def _baseline(schema, root, depth):
     t = schema.get("type")
     if isinstance(t, list):
         t = next((x for x in t if x != "null"), "string")
+    if t is None:  # typeless schema: infer container kind from shape (keep in sync with _walk)
+        if "properties" in schema:
+            t = "object"
+        elif "items" in schema:
+            t = "array"
     if t == "string":
         return _string_value(schema)
     if t == "integer":
@@ -115,6 +120,11 @@ def _walk(schema, path, root, depth, out, seen_refs):
     t = schema.get("type")
     if isinstance(t, list):
         t = next((x for x in t if x != "null"), None)
+    if t is None:  # typeless schema: infer container kind from shape (keep in sync with _baseline)
+        if "properties" in schema:
+            t = "object"
+        elif "items" in schema:
+            t = "array"
     if t == "string":
         if not schema.get("enum") and "const" not in schema:
             out.append(path)

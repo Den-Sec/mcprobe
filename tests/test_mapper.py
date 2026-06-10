@@ -133,3 +133,32 @@ def test_points_self_referential_ref_terminates():
     tool = ToolInfo(name="t", description="", input_schema=schema)
     points = injection_points(tool)  # must not hang (depth cap + visited refs)
     assert "root.name" in {p.json_path for p in points}
+
+
+def test_points_typeless_top_level_object():
+    # properties present, no explicit type:"object" (hand-authored / zod-style schema)
+    schema = {"properties": {"cmd": {"type": "string"}}, "required": ["cmd"]}
+    assert "cmd" in _paths(schema)
+
+
+def test_points_typeless_nested_object():
+    schema = {"type": "object",
+              "properties": {"config": {"properties": {"path": {"type": "string"}},
+                                        "required": ["path"]}},
+              "required": ["config"]}
+    assert "config.path" in _paths(schema)
+
+
+def test_points_typeless_array():
+    schema = {"type": "object",
+              "properties": {"hosts": {"items": {"type": "string"}}},
+              "required": ["hosts"]}
+    assert "hosts[0]" in _paths(schema)
+
+
+def test_baseline_typeless_nested_object():
+    schema = {"type": "object",
+              "properties": {"config": {"properties": {"path": {"type": "string"}},
+                                        "required": ["path"]}},
+              "required": ["config"]}
+    assert build_baseline(schema) == {"config": {"path": "mcprobe"}}
