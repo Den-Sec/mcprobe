@@ -2,6 +2,7 @@ from mcprobe.models import Probe, Finding, Severity, Confidence
 from mcprobe.checks.base import register
 
 _SLEEP_SECONDS = 5
+_LATENCY_MULT = 3
 
 @register
 class CmdInjection:
@@ -22,9 +23,18 @@ class CmdInjection:
     def evaluate(self, probe, response, ctx):
         if probe.token and ctx.oob and ctx.oob.interactions(probe.token):
             return self._finding(probe, Confidence.CONFIRMED, "OOB callback received")
-        if probe.meta.get("time_based") and probe.meta.get("elapsed", 0) >= probe.meta["threshold"]:
-            return self._finding(probe, Confidence.FIRM,
-                                 f"response delayed {probe.meta['elapsed']:.1f}s")
+        if probe.meta.get("time_based"):
+            elapsed = probe.meta.get("elapsed", 0)
+            sleep_s = probe.meta["threshold"]
+            baseline = getattr(ctx, "baseline", None)
+            if baseline is not None:
+                margin = max(baseline.latency + sleep_s * 0.8, baseline.latency * _LATENCY_MULT)
+                evidence = f"response delayed {elapsed:.1f}s vs baseline {baseline.latency:.1f}s"
+            else:
+                margin = sleep_s  # no calibration: fall back to the fixed threshold
+                evidence = f"response delayed {elapsed:.1f}s"
+            if elapsed >= margin:
+                return self._finding(probe, Confidence.FIRM, evidence)
         return None
     def _finding(self, probe, conf, evidence):
         return Finding(check=self.id, tool=probe.point.tool, param=probe.point.param_name,

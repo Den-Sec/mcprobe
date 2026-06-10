@@ -1,11 +1,18 @@
 import asyncio
-import statistics
 import time
 from mcprobe.inject.mapper import injection_points, build_baseline
 from mcprobe.checks.base import REGISTRY, CheckContext
 from mcprobe.models import ToolBaseline
 
 _CALIBRATION_CALLS = 2
+
+
+def _aggregate_latency(latencies):
+    # Minimum = the tool's intrinsic latency floor. A single slow outlier must NOT
+    # inflate the baseline, which would raise the timing-oracle margin and mask real
+    # injected delays (false negatives). FP-resistance comes from the margin formula
+    # (see cmd_injection._LATENCY_MULT), not from an inflated baseline.
+    return min(latencies) if latencies else 0.0
 
 
 async def _calibrate(session, tool):
@@ -25,7 +32,7 @@ async def _calibrate(session, tool):
         latencies.append(time.monotonic() - start)
         if i == 0:
             response = r
-    return ToolBaseline(latency=statistics.median(latencies), response=response)
+    return ToolBaseline(latency=_aggregate_latency(latencies), response=response)
 
 
 async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=None,
@@ -47,6 +54,10 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
     deferred = []
     for tool in tools:
         points = injection_points(tool)
+        # ctx.baseline is mutated per tool. Only token-bearing probes defer
+        # (cmd_injection OOB, ssrf) and they read ctx.oob, never ctx.baseline; keep
+        # baseline-consuming oracles non-token so they evaluate inline under the
+        # correct tool's baseline.
         ctx.baseline = await _calibrate(session, tool) if (calibrate and points) else None
         for point in points:
             for check in checks:

@@ -165,3 +165,29 @@ def test_check_context_baseline_defaults_none_and_accepts_value():
     assert ctx.baseline is None
     ctx2 = CheckContext(oob=None, transport="stdio", baseline=ToolBaseline(latency=1.0, response="r"))
     assert ctx2.baseline.latency == 1.0
+
+
+def _ctx_with_baseline(latency, response=""):
+    from mcprobe.checks.base import CheckContext
+    from mcprobe.models import ToolBaseline
+    return CheckContext(oob=None, transport="stdio",
+                        baseline=ToolBaseline(latency=latency, response=response))
+
+
+def test_cmdi_no_time_fp_on_slow_safe_tool():
+    c = CmdInjection()
+    point = InjectionPoint("slow", "host", {"host": "mcprobe"}, "host")
+    ctx = _ctx_with_baseline(6.0)
+    time_probe = [p for p in c.generate(point, ctx) if "sleep" in p.payload][0]
+    time_probe.meta["elapsed"] = 6.1
+    assert c.evaluate(time_probe, "", ctx) is None
+
+
+def test_cmdi_firm_when_delay_exceeds_baseline_margin():
+    c = CmdInjection()
+    point = InjectionPoint("ping", "host", {"host": "mcprobe"}, "host")
+    ctx = _ctx_with_baseline(0.1)
+    time_probe = [p for p in c.generate(point, ctx) if "sleep" in p.payload][0]
+    time_probe.meta["elapsed"] = 5.1
+    f = c.evaluate(time_probe, "", ctx)
+    assert f is not None and f.confidence.value == "firm"

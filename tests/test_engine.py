@@ -129,3 +129,9 @@ async def test_engine_calibration_can_be_disabled():
     sess = CountingSession()
     await scan_session(sess, oob=None, transport="stdio", check_ids=["info_leak"], calibrate=False)
     assert len(sess.calls) == 1  # only the single info_leak probe, no calibration calls
+
+
+def test_aggregate_latency_uses_min():
+    from mcprobe.engine import _aggregate_latency
+    assert _aggregate_latency([0.5, 0.1]) == 0.1
+    assert _aggregate_latency([]) == 0.0
