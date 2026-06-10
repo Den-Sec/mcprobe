@@ -1,10 +1,35 @@
 import asyncio
+import statistics
 import time
-from mcprobe.inject.mapper import injection_points
+from mcprobe.inject.mapper import injection_points, build_baseline
 from mcprobe.checks.base import REGISTRY, CheckContext
+from mcprobe.models import ToolBaseline
+
+_CALIBRATION_CALLS = 2
+
+
+async def _calibrate(session, tool):
+    """Issue benign control calls to learn this tool's baseline latency + response.
+
+    Uses the schema-valid baseline args (no payloads). Returns a ToolBaseline with
+    the median latency over _CALIBRATION_CALLS calls and the first response text.
+    """
+    args = build_baseline(tool.input_schema)
+    latencies, response = [], ""
+    for i in range(_CALIBRATION_CALLS):
+        start = time.monotonic()
+        try:
+            r = await session.call_tool(tool.name, args)
+        except Exception as e:
+            r = f"error: {e}"
+        latencies.append(time.monotonic() - start)
+        if i == 0:
+            response = r
+    return ToolBaseline(latency=statistics.median(latencies), response=response)
+
 
 async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=None,
-                       check_ids=None, oob_wait=2.0):
+                       check_ids=None, oob_wait=2.0, calibrate=True):
     ctx = CheckContext(oob=oob, transport=transport,
                        call_tool_unauth=call_tool_unauth)
     tools = await session.list_tools()
@@ -21,7 +46,9 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
 
     deferred = []
     for tool in tools:
-        for point in injection_points(tool):
+        points = injection_points(tool)
+        ctx.baseline = await _calibrate(session, tool) if (calibrate and points) else None
+        for point in points:
             for check in checks:
                 for probe in check.generate(point, ctx):
                     start = time.monotonic()

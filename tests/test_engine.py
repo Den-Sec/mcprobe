@@ -76,3 +76,56 @@ async def test_scan_confirms_nested_array_enum_traversal():
     assert ("path_traversal", "config.path") in confirmed   # nested object
     assert ("path_traversal", "paths[0]") in confirmed       # array item
     assert ("path_traversal", "path") in confirmed           # enum-gated tool (read_mode)
+
+
+class CountingSession:
+    """Records calibration calls and reports a benign response."""
+    def __init__(self):
+        self.calls = []
+    async def list_tools(self):
+        return [ToolInfo("echo", "", {"type": "object",
+                "properties": {"text": {"type": "string"}}, "required": ["text"]})]
+    async def call_tool(self, name, args):
+        self.calls.append((name, dict(args)))
+        return "benign output"
+
+
+@pytest.mark.asyncio
+async def test_engine_calibrates_once_per_tool():
+    from mcprobe.engine import _CALIBRATION_CALLS
+    sess = CountingSession()
+    await scan_session(sess, oob=None, transport="stdio", check_ids=["info_leak"])
+    calib = sess.calls[:_CALIBRATION_CALLS]
+    assert len(calib) == _CALIBRATION_CALLS
+    assert all(c == ("echo", {"text": "mcprobe"}) for c in calib)
+
+
+@pytest.mark.asyncio
+async def test_engine_populates_baseline_response_and_latency():
+    captured = {}
+
+    class SpyCheck:
+        id = "spy"
+        def generate(self, point, ctx):
+            captured["baseline"] = ctx.baseline
+            return []
+        def evaluate(self, probe, response, ctx):
+            return None
+
+    from mcprobe.checks.base import REGISTRY
+    REGISTRY["spy"] = SpyCheck()
+    try:
+        await scan_session(CountingSession(), oob=None, transport="stdio", check_ids=["spy"])
+    finally:
+        del REGISTRY["spy"]
+    b = captured["baseline"]
+    assert b is not None
+    assert b.response == "benign output"
+    assert b.latency >= 0.0
+
+
+@pytest.mark.asyncio
+async def test_engine_calibration_can_be_disabled():
+    sess = CountingSession()
+    await scan_session(sess, oob=None, transport="stdio", check_ids=["info_leak"], calibrate=False)
+    assert len(sess.calls) == 1  # only the single info_leak probe, no calibration calls
