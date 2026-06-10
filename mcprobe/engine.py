@@ -19,7 +19,8 @@ async def _calibrate(session, tool):
     """Issue benign control calls to learn this tool's baseline latency + response.
 
     Uses the schema-valid baseline args (no payloads). Returns a ToolBaseline with
-    the median latency over _CALIBRATION_CALLS calls and the first response text.
+    the minimum (floor) latency over _CALIBRATION_CALLS calls (see _aggregate_latency)
+    and the first response text.
     """
     args = build_baseline(tool.input_schema)
     latencies, response = [], ""
