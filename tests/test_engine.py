@@ -42,8 +42,8 @@ class DelayedOOB:
         import uuid
         token = uuid.uuid4().hex[:12]
         # The callback lands only after control returns to the event loop,
-        # i.e. it is NOT visible to an inline (pre-wait) poll. call_soon runs
-        # before the engine resumes from its single oob_wait sleep.
+        # i.e. it is NOT visible to an inline (pre-poll) check. call_soon runs
+        # before the engine resumes inside its poll-until-hit loop.
         asyncio.get_running_loop().call_soon(self._delivered.add, token)
         return token, f"http://oob.test/{token}"
 
@@ -53,7 +53,7 @@ class DelayedOOB:
 
 @pytest.mark.asyncio
 async def test_engine_defers_oob_eval_for_delayed_callback():
-    # With deferral + a single oob_wait, the delayed callback is caught.
+    # With deferral + the poll-until-hit loop, the delayed callback is caught.
     findings = await scan_session(FetchSession(), oob=DelayedOOB(),
                                   transport="http", oob_poll_interval=0.001, oob_timeout=0.1)
     assert any(f.check in ("ssrf", "cmd_injection") and f.confidence.value == "confirmed"
