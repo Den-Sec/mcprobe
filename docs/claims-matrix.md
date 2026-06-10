@@ -34,7 +34,8 @@ mapping. Run the suite with `python -m pytest -q` (88 tests as of v1.1).
 | Info-leak suppressed when the secret is already in the benign baseline (no docs/validator FP) | `test_info_leak_suppressed_when_secret_in_baseline`, `test_docs_secret_tool_no_info_leak_fp` |
 | Per-tool baseline calibration (latency + benign response) | `test_engine_calibrates_once_per_tool`, `test_engine_populates_baseline_response_and_latency`, `test_engine_calibration_can_be_disabled` |
 | `--aggressive` gates blocking time-based probes; default is non-blocking only | `test_cmdi_default_omits_blocking_sleep_probes`, `test_cmdi_aggressive_enables_sleep_probes`, `test_engine_plumbs_aggressive_to_checks` |
-| Works over stdio and streamable HTTP | `test_stdio_session_lists_and_calls_tools`, `test_http_session_factory_exists` |
+| Works over stdio (exercised end-to-end) | `test_stdio_session_lists_and_calls_tools` |
+| Streamable HTTP transport wired (session factory; CLI headers + auth/unauth differential) - see HTTP caveat below | `test_http_session_factory_exists`, `test_cli_parses_http_scan` |
 | Reports in console / JSON / SARIF / Markdown | `test_json_report_structure`, `test_sarif_is_valid_json_with_rules`, `test_markdown_contains_title_and_severity` |
 | All five v1 checks registered | `test_all_v1_checks_registered` |
 
@@ -57,3 +58,7 @@ mapping. Run the suite with `python -m pytest -q` (88 tests as of v1.1).
   misread as "secure."
 - **Info-leak baseline diff is by matched-pattern identity, not matched substring.**
   A real leak of the same shape as a benign baseline placeholder can be missed.
+- **HTTP transport is implemented and wired** (session factory, repeatable headers,
+  and the auth/unauth differential for `auth_bypass`) **but the automated suite
+  exercises only the session factory, not a live HTTP list+call round-trip.** stdio
+  is the end-to-end-tested transport; a live-HTTP e2e is a follow-up.
