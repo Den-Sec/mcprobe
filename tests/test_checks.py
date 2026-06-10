@@ -139,3 +139,10 @@ def test_auth_bypass_none_when_unauth_denied():
                        call_tool_unauth=deny)
     probe = a.generate(point, ctx)[0]
     assert a.evaluate(probe, "secret data", ctx) is None
+
+
+# --- Task 11: all checks registered ---
+def test_all_v1_checks_registered():
+    import mcprobe.checks
+    from mcprobe.checks.base import REGISTRY
+    assert {"path_traversal", "info_leak", "cmd_injection", "ssrf", "auth_bypass"} <= set(REGISTRY)
