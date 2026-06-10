@@ -11,3 +11,32 @@ def test_finding_roundtrip():
     assert f.severity == Severity.CRITICAL
     assert pr.point.param_name == "host"
     assert ToolInfo(name="ping", description="", input_schema={}).name == "ping"
+
+
+def test_injection_point_set_top_level():
+    from mcprobe.models import InjectionPoint
+    p = InjectionPoint(tool="t", json_path="host", base_args={"host": "mcprobe"}, param_name="host")
+    assert p.set("X") == {"host": "X"}
+
+
+def test_injection_point_set_nested_preserves_siblings():
+    from mcprobe.models import InjectionPoint
+    p = InjectionPoint(tool="t", json_path="config.path",
+                       base_args={"config": {"path": "mcprobe", "mode": "safe"}},
+                       param_name="config.path")
+    assert p.set("X") == {"config": {"path": "X", "mode": "safe"}}
+
+
+def test_injection_point_set_does_not_mutate_base_args():
+    from mcprobe.models import InjectionPoint
+    base = {"config": {"path": "mcprobe"}}
+    p = InjectionPoint(tool="t", json_path="config.path", base_args=base, param_name="config.path")
+    p.set("X")
+    assert base == {"config": {"path": "mcprobe"}}  # unchanged - deep copy
+
+
+def test_injection_point_set_array():
+    from mcprobe.models import InjectionPoint
+    p = InjectionPoint(tool="t", json_path="paths[0]", base_args={"paths": ["mcprobe"]},
+                       param_name="paths[0]")
+    assert p.set("X") == {"paths": ["X"]}

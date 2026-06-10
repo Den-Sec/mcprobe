@@ -30,6 +30,17 @@ class InjectionPoint:
     base_args: dict
     param_name: str
 
+    def set(self, value) -> dict:
+        """Return a deep copy of base_args with ``value`` deep-set at json_path.
+
+        Deep-copies so the shared baseline is never mutated across probes.
+        """
+        import copy
+        from mcprobe.inject.jsonpath import deep_set
+        args = copy.deepcopy(self.base_args)
+        deep_set(args, self.json_path, value)
+        return args
+
 
 @dataclass
 class Probe:
