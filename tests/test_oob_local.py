@@ -1,5 +1,5 @@
 import httpx
-from mcprobe.oob.local import LocalOOB
+from mcpsnare.oob.local import LocalOOB
 
 
 def test_local_oob_captures_callback():
@@ -14,7 +14,7 @@ def test_local_oob_captures_callback():
 
 def test_local_oob_poll_all_returns_all_interactions():
     import httpx
-    from mcprobe.oob.local import LocalOOB
+    from mcpsnare.oob.local import LocalOOB
     with LocalOOB() as oob:
         t1, u1 = oob.new_token()
         t2, u2 = oob.new_token()

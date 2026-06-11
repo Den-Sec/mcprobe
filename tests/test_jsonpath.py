@@ -1,5 +1,5 @@
 import pytest
-from mcprobe.inject.jsonpath import parse_path, deep_get, deep_set
+from mcpsnare.inject.jsonpath import parse_path, deep_get, deep_set
 
 
 def test_parse_dotted_keys():

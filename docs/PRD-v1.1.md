@@ -1,6 +1,6 @@
-# mcprobe v1.1 - Product Requirements Document
+# mcpsnare v1.1 - Product Requirements Document
 
-**Project:** mcprobe (active, confirmation-driven security scanner for MCP server implementations)
+**Project:** mcpsnare (active, confirmation-driven security scanner for MCP server implementations)
 **Version target:** v1.1 - "Hardening pass: depth, calibration, real-world fidelity"
 **Date:** 2026-06-08
 **Author:** Dennis Sepede (Den-Sec)
@@ -13,16 +13,16 @@
 
 v1 shipped a clean, TDD'd MVP: connector (stdio+HTTP), schema-naive injection mapper, 5 checks (cmd-injection, SSRF, path-traversal, auth-bypass, info-leak), OOB/time/canary oracles, engine, multi-format reporters. It passes 30 tests and an end-to-end demo that confirms 3 real vulns on a fixture.
 
-A post-ship critical code review (2026-06-08) found that v1 **works on the toy fixture but is shallow against real-world MCP servers**, and that its public positioning ("confirmation-driven / zero false positives / Burp Active Scan for MCP, beats the incumbents") currently **overstates** what the implementation guarantees. v1.1 exists to close that gap *before* mcprobe is promoted to the security audience that will scrutinize it.
+A post-ship critical code review (2026-06-08) found that v1 **works on the toy fixture but is shallow against real-world MCP servers**, and that its public positioning ("confirmation-driven / zero false positives / Burp Active Scan for MCP, beats the incumbents") currently **overstates** what the implementation guarantees. v1.1 exists to close that gap *before* mcpsnare is promoted to the security audience that will scrutinize it.
 
 **Guiding principle:** every claim in the README must be earned by verified behavior. Depth and correctness before new check classes; honesty before distribution.
 
 ### Findings driving v1.1 (from the review)
-- **Coverage:** injection points are top-level string params only (`mcprobe/inject/mapper.py:21-22`); nested objects, array items, and enums are ignored; payloads replace the whole value; schema constraints are not satisfied (`build_baseline` uses type defaults only); only `tools` are scanned (resources/prompts ignored); only `TextContent` is parsed (`mcprobe/connect/session.py:29`).
-- **False positives vs the "confirmed/zero-FP" claim:** time-based oracle uses a fixed 5s threshold with no baseline (`mcprobe/checks/cmd_injection.py:27`); info-leak fires FIRM on a single benign probe matching 2 secret-shaped patterns (`mcprobe/checks/info_leak.py`); auth-bypass uses exact string equality (`mcprobe/checks/auth_bypass.py:17`).
-- **Headline differentiator is timing-fragile:** OOB confirmation uses a single 2s wait then one poll (`mcprobe/engine.py:39-42`) - too short for real interactsh callbacks; cmd-injection shares one token across 3 payloads so the confirming payload is unknown.
-- **OS-blind payloads:** cmd-injection payloads are Unix-shell only (`mcprobe/checks/cmd_injection.py:14,18`); in v1's own demo only `&` fired on Windows.
-- **Engineering/safety:** scanning is fully sequential (`mcprobe/engine.py:23-37`); rate-limiting promised in the v1 spec is unimplemented; `--aggressive` is a parsed no-op.
+- **Coverage:** injection points are top-level string params only (`mcpsnare/inject/mapper.py:21-22`); nested objects, array items, and enums are ignored; payloads replace the whole value; schema constraints are not satisfied (`build_baseline` uses type defaults only); only `tools` are scanned (resources/prompts ignored); only `TextContent` is parsed (`mcpsnare/connect/session.py:29`).
+- **False positives vs the "confirmed/zero-FP" claim:** time-based oracle uses a fixed 5s threshold with no baseline (`mcpsnare/checks/cmd_injection.py:27`); info-leak fires FIRM on a single benign probe matching 2 secret-shaped patterns (`mcpsnare/checks/info_leak.py`); auth-bypass uses exact string equality (`mcpsnare/checks/auth_bypass.py:17`).
+- **Headline differentiator is timing-fragile:** OOB confirmation uses a single 2s wait then one poll (`mcpsnare/engine.py:39-42`) - too short for real interactsh callbacks; cmd-injection shares one token across 3 payloads so the confirming payload is unknown.
+- **OS-blind payloads:** cmd-injection payloads are Unix-shell only (`mcpsnare/checks/cmd_injection.py:14,18`); in v1's own demo only `&` fired on Windows.
+- **Engineering/safety:** scanning is fully sequential (`mcpsnare/engine.py:23-37`); rate-limiting promised in the v1 spec is unimplemented; `--aggressive` is a parsed no-op.
 
 ---
 
@@ -42,7 +42,7 @@ A post-ship critical code review (2026-06-08) found that v1 **works on the toy f
 - **NG4** New check classes beyond what's needed to prove the foundation (SQLi is optional/last; see §7).
 
 ### Success metrics (acceptance, measured by new fixtures)
-- **M-Coverage:** mcprobe detects a confirmed vuln in a tool whose vulnerable param is (a) nested in an object, (b) an array item, and (c) gated behind a required enum - three fixtures, each yields a confirmed finding.
+- **M-Coverage:** mcpsnare detects a confirmed vuln in a tool whose vulnerable param is (a) nested in an object, (b) an array item, and (c) gated behind a required enum - three fixtures, each yields a confirmed finding.
 - **M-NoFP:** three "clean but tricky" fixtures produce **zero** findings: a tool that always takes ~6s (slow-but-safe), a tool whose normal output always contains secret-shaped strings (docs/validator), and an HTTP tool whose responses contain a per-call timestamp.
 - **M-OOB:** an e2e test with a callback delayed to ~8s is still confirmed; evidence names the exact payload/separator that fired.
 - **M-Honesty:** a checklist maps each README claim to a passing test; confidence taxonomy documented.
@@ -125,7 +125,7 @@ A post-ship critical code review (2026-06-08) found that v1 **works on the toy f
 - **New deep-set/deep-get utility** in `inject/` for json_path application (dict/array). One responsibility, fully unit-tested.
 - **Calibration** lives in the engine (it owns IO); checks consume `ctx.baseline`. Avoid per-check calibration calls (cost).
 - **OOB provider interface** gains a `poll_all()`/timeout-aware contract; `LocalOOB` and `InteractshOOB` both implement it. Local stays synchronous-fast (early exit).
-- **Determinism:** mcprobe remains a direct MCP client (no LLM in loop) - probes/timing deterministic; that property must be preserved.
+- **Determinism:** mcpsnare remains a direct MCP client (no LLM in loop) - probes/timing deterministic; that property must be preserved.
 
 ---
 
@@ -151,7 +151,7 @@ A post-ship critical code review (2026-06-08) found that v1 **works on the toy f
 
 **Definition of done for v1.1:** all P0 requirements implemented + tested; M-Coverage, M-NoFP, M-OOB, M-Honesty success metrics met; README claims audited; full suite green in CI.
 
-**Promotion gate:** mcprobe is only promoted to the security community **after M5** (honesty pass) is complete - so the tool withstands scrutiny under whatever it claims.
+**Promotion gate:** mcpsnare is only promoted to the security community **after M5** (honesty pass) is complete - so the tool withstands scrutiny under whatever it claims.
 
 ---
 

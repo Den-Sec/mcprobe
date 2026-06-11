@@ -1,4 +1,4 @@
-from mcprobe.cli import main
+from mcpsnare.cli import main
 
 if __name__ == "__main__":
     main()

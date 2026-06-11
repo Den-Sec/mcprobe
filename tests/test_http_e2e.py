@@ -1,5 +1,5 @@
 """Live streamable-HTTP transport e2e: scan a real in-process MCP server over the
-same http_session path that `mcprobe scan --http` uses. Closes the HTTP caveat in
+same http_session path that `mcpsnare scan --http` uses. Closes the HTTP caveat in
 docs/claims-matrix.md - stdio was the only end-to-end-tested transport before.
 
 The harness reuses the existing vulnerable FastMCP fixture, served over HTTP. All
@@ -11,9 +11,9 @@ from contextlib import redirect_stdout
 
 import pytest
 
-from mcprobe.connect.session import http_session
-from mcprobe.engine import scan_session
-import mcprobe.checks  # noqa: F401  (register checks)
+from mcpsnare.connect.session import http_session
+from mcpsnare.engine import scan_session
+import mcpsnare.checks  # noqa: F401  (register checks)
 from tests.fixtures.http_server import serve_streamable_http
 from tests.fixtures.vuln_server.server import mcp
 
@@ -70,7 +70,7 @@ async def test_cli_http_scan_confirms_findings_json(live_url):
     # JSON. --oob none avoids starting a local OOB listener. Captures stdout (the
     # server stack is logging-silenced by the harness, so stdout is just the
     # banner + JSON).
-    from mcprobe.cli import build_parser, _run
+    from mcpsnare.cli import build_parser, _run
     args = build_parser().parse_args(
         ["scan", "--http", live_url, "--header", "Authorization:Bearer x",
          "--oob", "none", "--output", "json"])
@@ -90,7 +90,7 @@ async def test_cli_http_scan_no_header_single_session(live_url):
     # differential). Proves that branch works over live HTTP AND is distinct from the
     # dual-session one: path-traversal still confirms, but auth-bypass cannot (it needs
     # the unauth session, which only the --header branch opens).
-    from mcprobe.cli import build_parser, _run
+    from mcpsnare.cli import build_parser, _run
     args = build_parser().parse_args(
         ["scan", "--http", live_url, "--oob", "none", "--output", "json"])
     buf = io.StringIO()

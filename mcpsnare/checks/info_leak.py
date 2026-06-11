@@ -1,6 +1,6 @@
 import re
-from mcprobe.models import Probe, Finding, Severity, Confidence
-from mcprobe.checks.base import register
+from mcpsnare.models import Probe, Finding, Severity, Confidence
+from mcpsnare.checks.base import register
 
 _MARKERS = [re.compile(p) for p in [
     r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"AKIA[0-9A-Z]{16}",
@@ -12,8 +12,8 @@ _MARKERS = [re.compile(p) for p in [
 class InfoLeak:
     id = "info_leak"
     def generate(self, point, ctx):
-        return [Probe(check=self.id, point=point, payload="mcprobe-probe",
-                      args=point.set("mcprobe-probe"))]
+        return [Probe(check=self.id, point=point, payload="mcpsnare-probe",
+                      args=point.set("mcpsnare-probe"))]
     def evaluate(self, probe, response, ctx):
         hits = [m.pattern for m in _MARKERS if m.search(response or "")]
         if not hits:

@@ -4,7 +4,7 @@ import os
 import shlex
 import sys
 
-from mcprobe.report.render import to_json, to_sarif, to_markdown
+from mcpsnare.report.render import to_json, to_sarif, to_markdown
 
 
 def _positive_float(s):
@@ -25,7 +25,7 @@ def aggressive_note(aggressive: bool) -> str | None:
 
 
 def build_parser():
-    p = argparse.ArgumentParser(prog="mcprobe")
+    p = argparse.ArgumentParser(prog="mcpsnare")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scan", help="scan an MCP server")
     g = s.add_mutually_exclusive_group(required=True)
@@ -50,21 +50,21 @@ def build_parser():
 
 
 async def _run(args):
-    from mcprobe.connect.session import stdio_session, http_session
-    from mcprobe.connect.resources import ResourceToolView
-    from mcprobe.engine import scan_session
-    import mcprobe.checks  # register
-    from mcprobe.oob.local import LocalOOB
+    from mcpsnare.connect.session import stdio_session, http_session
+    from mcpsnare.connect.resources import ResourceToolView
+    from mcpsnare.engine import scan_session
+    import mcpsnare.checks  # register
+    from mcpsnare.oob.local import LocalOOB
 
-    print("[!] mcprobe - authorized testing only.")
+    print("[!] mcpsnare - authorized testing only.")
     oob_cm = None
     oob = None
     if args.oob == "local":
         oob_cm = LocalOOB()
         oob = oob_cm.__enter__()
     elif args.oob == "interactsh":
-        from mcprobe.oob.interactsh import InteractshOOB
-        from mcprobe.oob.interactsh_client import InteractshClient
+        from mcpsnare.oob.interactsh import InteractshOOB
+        from mcpsnare.oob.interactsh_client import InteractshClient
         oob = InteractshOOB(InteractshClient(server=args.interactsh_server))
     try:
         if args.stdio:

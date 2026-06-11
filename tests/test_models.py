@@ -1,4 +1,4 @@
-from mcprobe.models import Severity, Confidence, ToolInfo, InjectionPoint, Probe, Finding
+from mcpsnare.models import Severity, Confidence, ToolInfo, InjectionPoint, Probe, Finding
 
 
 def test_finding_roundtrip():
@@ -14,50 +14,50 @@ def test_finding_roundtrip():
 
 
 def test_injection_point_set_top_level():
-    from mcprobe.models import InjectionPoint
-    p = InjectionPoint(tool="t", json_path="host", base_args={"host": "mcprobe"}, param_name="host")
+    from mcpsnare.models import InjectionPoint
+    p = InjectionPoint(tool="t", json_path="host", base_args={"host": "mcpsnare"}, param_name="host")
     assert p.set("X") == {"host": "X"}
 
 
 def test_injection_point_set_nested_preserves_siblings():
-    from mcprobe.models import InjectionPoint
+    from mcpsnare.models import InjectionPoint
     p = InjectionPoint(tool="t", json_path="config.path",
-                       base_args={"config": {"path": "mcprobe", "mode": "safe"}},
+                       base_args={"config": {"path": "mcpsnare", "mode": "safe"}},
                        param_name="config.path")
     assert p.set("X") == {"config": {"path": "X", "mode": "safe"}}
 
 
 def test_injection_point_set_does_not_mutate_base_args():
-    from mcprobe.models import InjectionPoint
-    base = {"config": {"path": "mcprobe"}}
+    from mcpsnare.models import InjectionPoint
+    base = {"config": {"path": "mcpsnare"}}
     p = InjectionPoint(tool="t", json_path="config.path", base_args=base, param_name="config.path")
     p.set("X")
-    assert base == {"config": {"path": "mcprobe"}}  # unchanged - deep copy
+    assert base == {"config": {"path": "mcpsnare"}}  # unchanged - deep copy
 
 
 def test_injection_point_set_array():
-    from mcprobe.models import InjectionPoint
-    p = InjectionPoint(tool="t", json_path="paths[0]", base_args={"paths": ["mcprobe"]},
+    from mcpsnare.models import InjectionPoint
+    p = InjectionPoint(tool="t", json_path="paths[0]", base_args={"paths": ["mcpsnare"]},
                        param_name="paths[0]")
     assert p.set("X") == {"paths": ["X"]}
 
 
 def test_tool_baseline_holds_latency_and_response():
-    from mcprobe.models import ToolBaseline
+    from mcpsnare.models import ToolBaseline
     b = ToolBaseline(latency=0.42, response="hello")
     assert b.latency == 0.42
     assert b.response == "hello"
 
 
 def test_injection_point_embed_prefixes_valid_value():
-    from mcprobe.models import InjectionPoint
+    from mcpsnare.models import InjectionPoint
     p = InjectionPoint(tool="t", json_path="email",
-                       base_args={"email": "probe@mcprobe.example"}, param_name="email")
+                       base_args={"email": "probe@mcpsnare.example"}, param_name="email")
     out = p.embed("; curl http://oob/x")
-    assert out["email"] == "probe@mcprobe.example; curl http://oob/x"
+    assert out["email"] == "probe@mcpsnare.example; curl http://oob/x"
 
 
 def test_injection_point_embed_empty_when_leaf_absent():
-    from mcprobe.models import InjectionPoint
+    from mcpsnare.models import InjectionPoint
     p = InjectionPoint(tool="t", json_path="missing", base_args={}, param_name="missing")
     assert p.embed("PAY")["missing"] == "PAY"

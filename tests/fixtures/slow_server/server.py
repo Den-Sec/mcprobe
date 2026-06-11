@@ -1,4 +1,4 @@
-"""Slow-but-SAFE MCP server for mcprobe FP tests. Sleeps ~6s but never shells out."""
+"""Slow-but-SAFE MCP server for mcpsnare FP tests. Sleeps ~6s but never shells out."""
 import time
 
 from mcp.server.fastmcp import FastMCP

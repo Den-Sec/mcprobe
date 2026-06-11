@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from mcprobe.models import Finding
+from mcpsnare.models import Finding
 
 def _summary(findings):
     c = Counter(f.severity.value for f in findings)
@@ -23,7 +23,7 @@ def to_sarif(findings: list[Finding]) -> str:
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "runs": [{
-            "tool": {"driver": {"name": "mcprobe",
+            "tool": {"driver": {"name": "mcpsnare",
                                 "rules": [{"id": r} for r in sorted(rules)]}},
             "results": [{
                 "ruleId": f.check,
@@ -34,7 +34,7 @@ def to_sarif(findings: list[Finding]) -> str:
     }, indent=2)
 
 def to_markdown(findings: list[Finding]) -> str:
-    lines = ["# mcprobe report", "", f"**Findings:** {len(findings)}", ""]
+    lines = ["# mcpsnare report", "", f"**Findings:** {len(findings)}", ""]
     for f in findings:
         lines += [f"## {f.title}",
                   f"- **Severity:** {f.severity.value.upper()}  ({f.confidence.value})",

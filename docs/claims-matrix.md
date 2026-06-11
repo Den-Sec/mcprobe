@@ -1,6 +1,6 @@
 # Claims → test matrix
 
-mcprobe's honesty contract (PRD v1.1, R-F1): every public claim in the README is
+mcpsnare's honesty contract (PRD v1.1, R-F1): every public claim in the README is
 backed by a passing automated test, or it is softened/removed. This file is the
 mapping. Run the suite with `python -m pytest -q` (119 tests as of v1.1).
 
@@ -63,7 +63,7 @@ mapping. Run the suite with `python -m pytest -q` (119 tests as of v1.1).
   executed against a real cmd.exe / PowerShell host in CI.** Real-shell validation is
   a follow-up.
 - **Real interactsh OOB: client crypto is CI-tested; the live round-trip is manual.**
-  mcprobe ships a real interactsh client (RSA-OAEP / AES-256-CTR) whose crypto is
+  mcpsnare ships a real interactsh client (RSA-OAEP / AES-256-CTR) whose crypto is
   unit-tested in CI (`test_interactsh_client.py`), and the full path was manually
   verified live against `oast.fun` (a real DNS callback registered/polled/decrypted/
   matched end to end) - see [interactsh-runbook.md](interactsh-runbook.md). The live
@@ -82,6 +82,6 @@ mapping. Run the suite with `python -m pytest -q` (119 tests as of v1.1).
   MCP server** (uvicorn on an ephemeral localhost port): a real `http_session`
   list+call round-trip, a confirmed path-traversal scan, a confirmed auth-bypass via
   two real sessions (authed + unauth - exercising the async unauth differential over a
-  real socket), and a full `mcprobe scan --http` CLI run - see `tests/test_http_e2e.py`.
+  real socket), and a full `mcpsnare scan --http` CLI run - see `tests/test_http_e2e.py`.
   Residual: the server is a localhost in-process instance, not a remote network
   endpoint, so TLS, proxies, and real-world auth middleware are out of the suite's scope.

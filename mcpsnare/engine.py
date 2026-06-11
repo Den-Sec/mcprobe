@@ -2,9 +2,9 @@ import asyncio
 import math
 import time
 from dataclasses import replace
-from mcprobe.inject.mapper import injection_points, build_baseline
-from mcprobe.checks.base import REGISTRY, CheckContext
-from mcprobe.models import ToolBaseline
+from mcpsnare.inject.mapper import injection_points, build_baseline
+from mcpsnare.checks.base import REGISTRY, CheckContext
+from mcpsnare.models import ToolBaseline
 
 _CALIBRATION_CALLS = 2
 

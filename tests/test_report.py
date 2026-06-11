@@ -1,6 +1,6 @@
 import json
-from mcprobe.models import Finding, Severity, Confidence
-from mcprobe.report.render import to_json, to_sarif, to_markdown
+from mcpsnare.models import Finding, Severity, Confidence
+from mcpsnare.report.render import to_json, to_sarif, to_markdown
 
 def _f():
     return [Finding("cmd_injection", "ping", "host", Severity.CRITICAL, Confidence.CONFIRMED,

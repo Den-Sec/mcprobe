@@ -1,4 +1,4 @@
-from mcprobe.cli import build_parser
+from mcpsnare.cli import build_parser
 
 
 def test_cli_parses_stdio_scan():
@@ -12,13 +12,13 @@ def test_cli_parses_http_scan():
 
 
 def test_aggressive_note_present_in_default_mode():
-    from mcprobe.cli import aggressive_note
+    from mcpsnare.cli import aggressive_note
     note = aggressive_note(False)
     assert note and "--aggressive" in note and "time-based" in note
 
 
 def test_aggressive_note_absent_in_aggressive_mode():
-    from mcprobe.cli import aggressive_note
+    from mcpsnare.cli import aggressive_note
     assert aggressive_note(True) is None
 
 

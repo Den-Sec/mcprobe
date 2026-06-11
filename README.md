@@ -1,17 +1,17 @@
-# mcprobe
+# mcpsnare
 
 **Active, confirmation-driven security scanner for MCP server implementations - Burp Active Scan, for MCP.**
 
-mcprobe enumerates the tools exposed by a Model Context Protocol (MCP) server,
+mcpsnare enumerates the tools exposed by a Model Context Protocol (MCP) server,
 maps their parameters to injection points, fires targeted payloads, and reports
 each finding with a **confidence level earned by a concrete oracle** - prioritising
 actively-confirmed, exploitable issues over guesses.
 
-## Why mcprobe
+## Why mcpsnare
 
 Most "MCP security" tooling is either a generic fuzzer (noisy, low-signal) or a
 defensive/static analyzer (looks at config and source, never proves exploitability).
-mcprobe is different:
+mcpsnare is different:
 
 - **Oracle-backed, not guesses.** Every finding is tied to a concrete signal: an
   **out-of-band (OOB)** callback, a **calibrated time** delay, a **canary** value
@@ -29,20 +29,20 @@ mcprobe is different:
 pip install -e .
 ```
 
-This installs the `mcprobe` console entry point.
+This installs the `mcpsnare` console entry point.
 
 ## Usage
 
 Scan a local stdio server:
 
 ```
-mcprobe scan --stdio "python server.py"
+mcpsnare scan --stdio "python server.py"
 ```
 
 Scan a remote HTTP MCP endpoint, with auth, emitting SARIF:
 
 ```
-mcprobe scan --http https://host/mcp --header "Authorization: Bearer X" --output sarif
+mcpsnare scan --http https://host/mcp --header "Authorization: Bearer X" --output sarif
 ```
 
 Useful flags:
@@ -52,22 +52,22 @@ Useful flags:
 - `--header "k:v"` add an HTTP header (repeatable).
 - `--oob {local,interactsh,none}` confirmation backend for OOB callbacks
   (`local` default; `interactsh` requires an injectable interactsh client, see below).
-- `--aggressive` also send blocking time-based (sleep) probes; by default mcprobe sends only non-blocking OOB/canary/pattern probes (time-based command-injection detection is aggressive-only).
+- `--aggressive` also send blocking time-based (sleep) probes; by default mcpsnare sends only non-blocking OOB/canary/pattern probes (time-based command-injection detection is aggressive-only).
 - `--concurrency N` max concurrent probe requests (default 4). Time-based probes always run serially (uncontended latency).
 - `--rate R` cap the request rate to R requests/second (default unlimited). Honored across concurrency and calibration.
-- `--oob-timeout S` / `--oob-poll-interval S` tune how long (default 20s) and how often (default 2.5s) mcprobe polls for OOB callbacks.
+- `--oob-timeout S` / `--oob-poll-interval S` tune how long (default 20s) and how often (default 2.5s) mcpsnare polls for OOB callbacks.
 - `--output {console,json,sarif,md}` output format (default `console`).
 
 ## Out-of-band (OOB) confirmation
 
-OOB callbacks are how mcprobe confirms blind command injection and SSRF: a probe
-makes the target reach back to a listener mcprobe controls.
+OOB callbacks are how mcpsnare confirms blind command injection and SSRF: a probe
+makes the target reach back to a listener mcpsnare controls.
 
 - `--oob local` (default) spins up an in-process HTTP listener on localhost. It
   needs no external service and works for targets that can reach your machine
   (typically local stdio servers).
 - `--oob interactsh` uses an out-of-band interaction server for targets that
-  cannot reach localhost (e.g. remote HTTP servers). mcprobe ships a real interactsh
+  cannot reach localhost (e.g. remote HTTP servers). mcpsnare ships a real interactsh
   client (RSA-OAEP / AES-256-CTR), so this works out of the box against the public
   `oast.fun` (override with `--interactsh-server`); it was live-verified end to end.
   `InteractshOOB` also accepts any injectable client exposing `register() -> domain`
@@ -99,19 +99,19 @@ The timing and info-leak oracles are where **FIRM** and **TENTATIVE** arise.
 | `info_leak`      | Secret / sensitive info leak   | CWE-200  |
 | `sql_injection`  | SQL injection                  | CWE-89   |
 
-mcprobe also enumerates MCP **resource templates** and treats their templated URI
+mcpsnare also enumerates MCP **resource templates** and treats their templated URI
 params (e.g. `file:///{path}`) as injection points for path-traversal and info-leak.
 
 ## Authorized testing only
 
-**mcprobe is an active scanner. It sends real, potentially destructive payloads
+**mcpsnare is an active scanner. It sends real, potentially destructive payloads
 to the target.** Run it only against systems you own or have explicit written
 authorization to test. Unauthorized use may be illegal. You are responsible for
 how you use this tool.
 
 ## Validation
 
-mcprobe is validated by an automated test suite against bundled
+mcpsnare is validated by an automated test suite against bundled
 deliberately-vulnerable fixture servers in `tests/fixtures/`. The suite exercises
 command injection (including cross-OS cmd.exe / PowerShell payloads), SSRF, path
 traversal, info-leak, nested/array/enum injection points, and the OOB,

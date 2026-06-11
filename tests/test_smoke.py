@@ -1,5 +1,5 @@
-import mcprobe
+import mcpsnare
 
 
 def test_package_imports():
-    assert mcprobe.__version__
+    assert mcpsnare.__version__

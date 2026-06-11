@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Protocol
-from mcprobe.models import InjectionPoint, Probe, Finding, ToolBaseline
+from mcpsnare.models import InjectionPoint, Probe, Finding, ToolBaseline
 
 
 @dataclass

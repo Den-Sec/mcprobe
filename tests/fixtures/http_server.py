@@ -2,8 +2,8 @@
 
 Serves a FastMCP instance over real HTTP (uvicorn in a daemon thread, on an
 ephemeral 127.0.0.1 port) and yields the streamable-HTTP endpoint URL, so a test
-can scan it through mcprobe's real ``http_session`` - the same client path a user
-hits with ``mcprobe scan --http``. stdio is already e2e-tested; this closes the
+can scan it through mcpsnare's real ``http_session`` - the same client path a user
+hits with ``mcpsnare scan --http``. stdio is already e2e-tested; this closes the
 live-HTTP gap (see docs/claims-matrix.md).
 
 A FastMCP instance binds a single ``StreamableHTTPSessionManager`` whose ``run()`` is
@@ -18,9 +18,9 @@ from contextlib import contextmanager
 
 import uvicorn
 
-# mcprobe prints (it does not use logging), so muting the server-side stack only
+# mcpsnare prints (it does not use logging), so muting the server-side stack only
 # silences uvicorn/mcp internals - it keeps a test's captured stdout clean for JSON
-# parsing (Task 4 reads the CLI's stdout) without suppressing anything mcprobe emits.
+# parsing (Task 4 reads the CLI's stdout) without suppressing anything mcpsnare emits.
 logging.getLogger("uvicorn").setLevel(logging.CRITICAL)
 logging.getLogger("mcp").setLevel(logging.CRITICAL)
 

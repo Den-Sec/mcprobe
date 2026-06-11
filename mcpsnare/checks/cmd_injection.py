@@ -1,5 +1,5 @@
-from mcprobe.models import Probe, Finding, Severity, Confidence
-from mcprobe.checks.base import register
+from mcpsnare.models import Probe, Finding, Severity, Confidence
+from mcpsnare.checks.base import register
 
 _SLEEP_SECONDS = 5
 _LATENCY_MULT = 3
@@ -32,19 +32,19 @@ class CmdInjection:
             for tpl in _OOB_TEMPLATES:
                 token, url = ctx.oob.new_token()
                 cmd = tpl.format(url=url)                  # separator+command, e.g. "; curl <url>"
-                whole_args = point.set(f"mcprobe{cmd}")
+                whole_args = point.set(f"mcpsnare{cmd}")
                 embed_args = point.embed(cmd)             # valid-value prefix + cmd
                 variants = [whole_args]
                 if embed_args != whole_args:
                     variants.append(embed_args)
                 for args in variants:
-                    from mcprobe.inject.jsonpath import deep_get
+                    from mcpsnare.inject.jsonpath import deep_get
                     payload = deep_get(args, point.json_path)
                     probes.append(Probe(check=self.id, point=point, payload=str(payload),
                                         args=args, token=token))
         if getattr(ctx, "aggressive", False):
             for tpl in _SLEEP_TEMPLATES:
-                pl = f"mcprobe{tpl.format(n=_SLEEP_SECONDS, n1=_SLEEP_SECONDS + 1)}"
+                pl = f"mcpsnare{tpl.format(n=_SLEEP_SECONDS, n1=_SLEEP_SECONDS + 1)}"
                 probes.append(Probe(check=self.id, point=point, payload=pl, args=point.set(pl),
                                     meta={"time_based": True, "threshold": _SLEEP_SECONDS}))
         return probes

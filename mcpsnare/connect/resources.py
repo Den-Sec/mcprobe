@@ -1,6 +1,6 @@
 import re
 
-from mcprobe.models import ToolInfo
+from mcpsnare.models import ToolInfo
 
 _TMPL_PARAM = re.compile(r"\{([^}/]+)\}")
 
@@ -12,7 +12,7 @@ class ResourceToolView:
     the template and ``read_resource``s it.
 
     The wrapped object must expose ``list_resource_templates() -> list[(name, uriTemplate)]``
-    and ``read_resource(uri) -> str`` (mcprobe's Session does).
+    and ``read_resource(uri) -> str`` (mcpsnare's Session does).
     """
 
     def __init__(self, session):

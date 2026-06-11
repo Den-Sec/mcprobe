@@ -1,5 +1,5 @@
-from mcprobe.models import Probe, Finding, Severity, Confidence
-from mcprobe.checks.base import register
+from mcpsnare.models import Probe, Finding, Severity, Confidence
+from mcpsnare.checks.base import register
 
 @register
 class SSRF:

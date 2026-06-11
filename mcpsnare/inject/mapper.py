@@ -1,20 +1,20 @@
-from mcprobe.models import ToolInfo, InjectionPoint
+from mcpsnare.models import ToolInfo, InjectionPoint
 
 _MAX_DEPTH = 4
-_STRING_DEFAULT = "mcprobe"
+_STRING_DEFAULT = "mcpsnare"
 _FORMAT_SAMPLES = {
-    "uri": "https://mcprobe.example/probe",
-    "uri-reference": "https://mcprobe.example/probe",
-    "url": "https://mcprobe.example/probe",
-    "email": "probe@mcprobe.example",
-    "idn-email": "probe@mcprobe.example",
+    "uri": "https://mcpsnare.example/probe",
+    "uri-reference": "https://mcpsnare.example/probe",
+    "url": "https://mcpsnare.example/probe",
+    "email": "probe@mcpsnare.example",
+    "idn-email": "probe@mcpsnare.example",
     "date": "2026-01-01",
     "date-time": "2026-01-01T00:00:00Z",
     "time": "00:00:00",
     "uuid": "00000000-0000-4000-8000-000000000000",
     "ipv4": "127.0.0.1",
     "ipv6": "::1",
-    "hostname": "mcprobe.example",
+    "hostname": "mcpsnare.example",
 }
 
 

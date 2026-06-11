@@ -1,5 +1,5 @@
 """MCP server whose benign output ALWAYS contains secret-shaped strings (docs/validator
-shape) - used to prove mcprobe does not false-flag info-leak. Not a real leak."""
+shape) - used to prove mcpsnare does not false-flag info-leak. Not a real leak."""
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("secret-server")

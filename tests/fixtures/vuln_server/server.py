@@ -1,4 +1,4 @@
-"""Deliberately vulnerable MCP server for mcprobe integration tests. Do not deploy."""
+"""Deliberately vulnerable MCP server for mcpsnare integration tests. Do not deploy."""
 import subprocess
 from typing import Literal
 
@@ -50,7 +50,7 @@ def read_doc(path: str) -> str:
 @mcp.tool()
 def whoami(user: str) -> str:
     """Return profile; leaks secrets on the magic value."""
-    if user == "mcprobe-probe":
+    if user == "mcpsnare-probe":
         return "AKIAIOSFODNN7EXAMPLE\n-----BEGIN PRIVATE KEY-----\nMIIB"
     return f"user {user}"
 

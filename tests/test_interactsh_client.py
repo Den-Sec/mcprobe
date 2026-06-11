@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from mcprobe.oob.interactsh_client import InteractshClient
+from mcpsnare.oob.interactsh_client import InteractshClient
 
 
 def test_interactsh_client_register_returns_domain(monkeypatch):

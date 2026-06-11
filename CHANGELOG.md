@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to mcprobe are documented here. Versions follow a simple
+All notable changes to mcpsnare are documented here. Versions follow a simple
 0.x scheme (the public interface is not yet frozen).
 
 ## [Unreleased]
@@ -9,13 +9,13 @@ All notable changes to mcprobe are documented here. Versions follow a simple
 - **Live HTTP transport e2e.** The test suite now spins an in-process streamable-HTTP
   MCP server (uvicorn, ephemeral localhost port) and scans it through the real
   `http_session`: a list+call round-trip, a confirmed path-traversal scan, a confirmed
-  auth-bypass via a dual real-session unauth differential, and a full `mcprobe scan --http`
+  auth-bypass via a dual real-session unauth differential, and a full `mcpsnare scan --http`
   CLI run. Closes the HTTP end-to-end caveat - stdio was previously the only e2e-tested
   transport. No production-code changes (test/coverage only).
 
 ## 0.2.0 - 2026-06-10 - "v1.1 hardening pass"
 
-A depth/correctness/honesty overhaul: mcprobe now reaches realistically-shaped MCP
+A depth/correctness/honesty overhaul: mcpsnare now reaches realistically-shaped MCP
 schemas, calibrates per tool to kill false positives, confirms remote OOB for real,
 and only claims what it can prove.
 

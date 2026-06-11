@@ -1,4 +1,4 @@
-from mcprobe.oob.interactsh import InteractshOOB
+from mcpsnare.oob.interactsh import InteractshOOB
 
 
 class FakeClient:

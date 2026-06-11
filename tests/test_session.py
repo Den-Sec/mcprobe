@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from mcprobe.connect.session import http_session, stdio_session
+from mcpsnare.connect.session import http_session, stdio_session
 
 
 @pytest.mark.asyncio
@@ -23,7 +23,7 @@ def test_http_session_factory_exists():
 
 def test_call_tool_flattens_structured_content():
     import asyncio
-    from mcprobe.connect.session import Session
+    from mcpsnare.connect.session import Session
 
     class _Text:
         text = "plain part"
@@ -43,7 +43,7 @@ def test_call_tool_flattens_structured_content():
 
 def test_resource_tool_view_exposes_templates_as_tools():
     import asyncio
-    from mcprobe.connect.resources import ResourceToolView
+    from mcpsnare.connect.resources import ResourceToolView
 
     class FakeRes:
         async def list_resource_templates(self):
@@ -62,7 +62,7 @@ def test_resource_tool_view_exposes_templates_as_tools():
 
 def test_session_read_resource_flattens_text():
     import asyncio
-    from mcprobe.connect.session import Session
+    from mcpsnare.connect.session import Session
 
     class _C:
         text = "resource body"

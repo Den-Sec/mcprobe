@@ -1,8 +1,8 @@
 import asyncio
 import pytest
-from mcprobe.models import ToolInfo
-from mcprobe.engine import scan_session
-import mcprobe.checks  # register checks
+from mcpsnare.models import ToolInfo
+from mcpsnare.engine import scan_session
+import mcpsnare.checks  # register checks
 
 class FakeSession:
     async def list_tools(self):
@@ -100,8 +100,8 @@ async def test_engine_poll_bounded_when_no_callback():
 
 import sys
 from pathlib import Path
-from mcprobe.connect.session import stdio_session
-import mcprobe.checks  # noqa: F401  (register checks)
+from mcpsnare.connect.session import stdio_session
+import mcpsnare.checks  # noqa: F401  (register checks)
 
 _SERVER = str(Path(__file__).parent / "fixtures" / "vuln_server" / "server.py")
 
@@ -130,12 +130,12 @@ class CountingSession:
 
 @pytest.mark.asyncio
 async def test_engine_calibrates_once_per_tool():
-    from mcprobe.engine import _CALIBRATION_CALLS
+    from mcpsnare.engine import _CALIBRATION_CALLS
     sess = CountingSession()
     await scan_session(sess, oob=None, transport="stdio", check_ids=["info_leak"])
     calib = sess.calls[:_CALIBRATION_CALLS]
     assert len(calib) == _CALIBRATION_CALLS
-    assert all(c == ("echo", {"text": "mcprobe"}) for c in calib)
+    assert all(c == ("echo", {"text": "mcpsnare"}) for c in calib)
 
 
 @pytest.mark.asyncio
@@ -150,7 +150,7 @@ async def test_engine_populates_baseline_response_and_latency():
         def evaluate(self, probe, response, ctx):
             return None
 
-    from mcprobe.checks.base import REGISTRY
+    from mcpsnare.checks.base import REGISTRY
     REGISTRY["spy"] = SpyCheck()
     try:
         await scan_session(CountingSession(), oob=None, transport="stdio", check_ids=["spy"])
@@ -170,7 +170,7 @@ async def test_engine_calibration_can_be_disabled():
 
 
 def test_aggregate_latency_uses_min():
-    from mcprobe.engine import _aggregate_latency
+    from mcpsnare.engine import _aggregate_latency
     assert _aggregate_latency([0.5, 0.1]) == 0.1
     assert _aggregate_latency([]) == 0.0
 
@@ -249,7 +249,7 @@ async def test_engine_plumbs_aggressive_to_checks():
         def evaluate(self, probe, response, ctx):
             return None
 
-    from mcprobe.checks.base import REGISTRY
+    from mcpsnare.checks.base import REGISTRY
     REGISTRY["spyagg"] = SpyAgg()
     try:
         await scan_session(CountingSession(), oob=None, transport="stdio",
@@ -385,7 +385,7 @@ async def test_engine_auth_bypass_fires_over_async_unauth():
     assert any(f.check == "auth_bypass" and f.confidence.value == "confirmed" for f in findings)
 
 
-from mcprobe.connect.resources import ResourceToolView
+from mcpsnare.connect.resources import ResourceToolView
 
 
 class FakeResourceSession:

@@ -1,6 +1,6 @@
 import re
-from mcprobe.models import Probe, Finding, Severity, Confidence
-from mcprobe.checks.base import register
+from mcpsnare.models import Probe, Finding, Severity, Confidence
+from mcpsnare.checks.base import register
 
 _SLEEP_SECONDS = 5
 _LATENCY_MULT = 3

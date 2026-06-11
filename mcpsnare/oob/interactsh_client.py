@@ -17,7 +17,7 @@ def _rand(n):
 class InteractshClient:
     """Minimal real interactsh client: ``register() -> domain``, ``poll() -> list[dict]``.
 
-    Implements the interactsh RSA-OAEP(SHA-256) + AES-256-CFB protocol so mcprobe's
+    Implements the interactsh RSA-OAEP(SHA-256) + AES-256-CFB protocol so mcpsnare's
     ``InteractshOOB`` works against a public OAST (default ``oast.fun``) or a self-hosted
     server out of the box. Inject via: ``InteractshOOB(InteractshClient())``.
     """

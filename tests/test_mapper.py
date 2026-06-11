@@ -1,5 +1,5 @@
-from mcprobe.models import ToolInfo
-from mcprobe.inject.mapper import build_baseline, injection_points
+from mcpsnare.models import ToolInfo
+from mcpsnare.inject.mapper import build_baseline, injection_points
 
 SCHEMA = {
     "type": "object",
@@ -14,7 +14,7 @@ SCHEMA = {
 
 def test_build_baseline_fills_required_by_type():
     base = build_baseline(SCHEMA)
-    assert base["host"] == "mcprobe"
+    assert base["host"] == "mcpsnare"
     assert base["count"] == 1
     assert "verbose" not in base
 
@@ -54,7 +54,7 @@ def test_baseline_recurses_required_nested_object():
                                         "properties": {"path": {"type": "string"}},
                                         "required": ["path"]}},
               "required": ["config"]}
-    assert build_baseline(schema) == {"config": {"path": "mcprobe"}}
+    assert build_baseline(schema) == {"config": {"path": "mcpsnare"}}
 
 
 def test_baseline_resolves_ref():
@@ -64,14 +64,14 @@ def test_baseline_resolves_ref():
               "type": "object",
               "properties": {"config": {"$ref": "#/$defs/Cfg"}},
               "required": ["config"]}
-    assert build_baseline(schema) == {"config": {"path": "mcprobe"}}
+    assert build_baseline(schema) == {"config": {"path": "mcpsnare"}}
 
 
 def test_baseline_array_of_strings():
     schema = {"type": "object",
               "properties": {"paths": {"type": "array", "items": {"type": "string"}}},
               "required": ["paths"]}
-    assert build_baseline(schema) == {"paths": ["mcprobe"]}
+    assert build_baseline(schema) == {"paths": ["mcpsnare"]}
 
 
 def _paths(schema):
@@ -161,4 +161,4 @@ def test_baseline_typeless_nested_object():
               "properties": {"config": {"properties": {"path": {"type": "string"}},
                                         "required": ["path"]}},
               "required": ["config"]}
-    assert build_baseline(schema) == {"config": {"path": "mcprobe"}}
+    assert build_baseline(schema) == {"config": {"path": "mcpsnare"}}

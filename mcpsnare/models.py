@@ -42,7 +42,7 @@ class InjectionPoint:
         Deep-copies so the shared baseline is never mutated across probes.
         """
         import copy
-        from mcprobe.inject.jsonpath import deep_set
+        from mcpsnare.inject.jsonpath import deep_set
         args = copy.deepcopy(self.base_args)
         deep_set(args, self.json_path, value)
         return args
@@ -52,7 +52,7 @@ class InjectionPoint:
         json_path (suffix by default), rather than replacing it. Reaches vulns behind
         format/content validation. Falls back to the payload alone if the leaf is absent."""
         import copy
-        from mcprobe.inject.jsonpath import deep_get, deep_set
+        from mcpsnare.inject.jsonpath import deep_get, deep_set
         args = copy.deepcopy(self.base_args)
         try:
             valid = deep_get(args, self.json_path)
