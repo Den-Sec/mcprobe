@@ -4,16 +4,45 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcpsnare"
-version = "0.2.0"
-description = "Active, confirmation-driven security scanner for MCP server implementations"
+dynamic = ["version"]
+description = "Active, confirmation-driven security scanner for MCP (Model Context Protocol) servers - Burp Active Scan, for MCP."
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dennis Sepede", email = "dennisepede@proton.me" }]
+keywords = ["mcp", "model-context-protocol", "security", "scanner", "pentest", "vulnerability", "dast", "appsec", "ssrf", "oob"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+]
 dependencies = ["mcp>=1.0.0", "httpx>=0.27", "rich>=13.0", "cryptography>=42.0"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "uvicorn>=0.31"]
+
+[project.urls]
+Homepage = "https://github.com/Den-Sec/mcpsnare"
+Repository = "https://github.com/Den-Sec/mcpsnare"
+Issues = "https://github.com/Den-Sec/mcpsnare/issues"
+Changelog = "https://github.com/Den-Sec/mcpsnare/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mcpsnare = "mcpsnare.cli:main"
+
+[tool.setuptools]
+packages = ["mcpsnare", "mcpsnare.checks", "mcpsnare.connect", "mcpsnare.inject", "mcpsnare.oob", "mcpsnare.report"]
+
+[tool.setuptools.dynamic]
+version = { attr = "mcpsnare.__version__" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

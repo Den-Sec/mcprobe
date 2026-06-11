@@ -3,7 +3,18 @@
 All notable changes to mcpsnare are documented here. Versions follow a simple
 0.x scheme (the public interface is not yet frozen).
 
-## [Unreleased]
+## 0.3.0 - 2026-06-11 - "mcpsnare"
+
+First PyPI release. The project is renamed and the HTTP transport is now fully
+end-to-end tested.
+
+### Changed
+- **Rebrand: mcprobe -> mcpsnare.** The tool, package, CLI command, and module are now
+  `mcpsnare`; this is its PyPI debut (`pip install mcpsnare`). The repository moved to
+  `Den-Sec/mcpsnare` and the old GitHub URLs redirect. No scanner behaviour changed.
+- **MCP SDK migration.** Moved off the deprecated `streamablehttp_client` to
+  `streamable_http_client` via `create_mcp_http_client`, which preserves the MCP read /
+  connect timeouts. Same transport, current SDK surface.
 
 ### Added
 - **Live HTTP transport e2e.** The test suite now spins an in-process streamable-HTTP
