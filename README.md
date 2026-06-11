@@ -69,7 +69,7 @@ makes the target reach back to a listener mcprobe controls.
   exposing `register() -> domain` and `poll() -> list`. You supply that client;
   any library implementing those two methods works. If no such client is
   installed, `--oob interactsh` errors gracefully and tells you to use
-  `--oob local` instead. No specific pip package is bundled or required.
+  `--oob local` instead. No specific pip package is bundled or required. See [docs/interactsh-runbook.md](docs/interactsh-runbook.md) for a real end-to-end runbook.
 - `--oob none` disables OOB confirmation; only time-based and canary oracles run.
 
 ## Confidence levels

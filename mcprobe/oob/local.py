@@ -36,3 +36,6 @@ class LocalOOB:
 
     def interactions(self, token: str) -> list[dict]:
         return list(self._hits.get(token, []))
+
+    def poll_all(self) -> dict[str, list[dict]]:
+        return {tok: list(hits) for tok, hits in self._hits.items()}

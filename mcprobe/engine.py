@@ -84,14 +84,14 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
         tokens = [p.token for _, p, _ in deferred if p.token]
         polls = max(1, math.ceil(oob_timeout / oob_poll_interval)) if oob_poll_interval > 0 else 1
         for _ in range(polls):
-            # Early-exit only when ALL outstanding tokens resolve. For a multi-token
-            # check (cmd_injection issues 3 OOB tokens, one per separator) usually only
-            # the working separator fires, so a vulnerable target waits the full timeout.
-            # That is bounded (one per-scan timeout, not per-probe) and correct for M3.
-            # M6/R-C3: replace the per-token interactions() calls with a single poll_all()
-            # per iteration so real interactsh does one network round-trip, not N.
-            if oob is not None and all(oob.interactions(t) for t in tokens):
-                break
+            # One round-trip per iteration via poll_all(). Early-exit only when ALL
+            # outstanding tokens resolve; a multi-token check usually fires just one
+            # separator, so a vulnerable target waits the bounded timeout (per-scan,
+            # not per-probe) - acceptable and correct.
+            if oob is not None:
+                hits = oob.poll_all()
+                if all(hits.get(t) for t in tokens):
+                    break
             await asyncio.sleep(oob_poll_interval)
         for check, probe, resp in deferred:
             collect(check.evaluate(probe, resp, ctx))

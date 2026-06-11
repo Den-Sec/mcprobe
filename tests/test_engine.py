@@ -50,6 +50,9 @@ class DelayedOOB:
     def interactions(self, token):
         return [{"path": f"/{token}"}] if token in self._delivered else []
 
+    def poll_all(self):
+        return {t: [{"path": f"/{t}"}] for t in self._delivered}
+
 
 @pytest.mark.asyncio
 async def test_engine_defers_oob_eval_for_delayed_callback():
@@ -73,6 +76,10 @@ class CountResolveOOB:
     def interactions(self, token):
         self._calls += 1
         return [{"path": "/tok"}] if (token == self._tok and self._calls >= self.resolve_after) else []
+    def poll_all(self):
+        self._calls += 1
+        hit = (self._tok is not None and self._calls >= self.resolve_after)
+        return {self._tok: [{"path": "/tok"}]} if hit else {}
 
 
 @pytest.mark.asyncio
@@ -207,6 +214,8 @@ class MultiDelayedOOB:
         return t, f"http://oob/{t}"
     def interactions(self, token):
         return [{"path": f"/{token}"}] if token in self._delivered else []
+    def poll_all(self):
+        return {t: [{"path": f"/{t}"}] for t in self._delivered}
 
 
 class ShellSession:
@@ -263,6 +272,8 @@ class ShellLikeOOB:
         return t, url
     def interactions(self, token):
         return [{"path": f"/{token}"}] if token in self.delivered else []
+    def poll_all(self):
+        return {t: [{"path": f"/{t}"}] for t in self.delivered}
 
 
 def _shell_session(oob, recognizes):
