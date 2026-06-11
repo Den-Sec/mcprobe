@@ -353,3 +353,15 @@ async def test_engine_concurrency_is_faster():
                        check_ids=["path_traversal"], concurrency=8)
     conc_t = time.monotonic() - t0
     assert conc_t < seq_t * 0.7  # materially faster
+
+
+@pytest.mark.asyncio
+async def test_engine_rate_limit_caps_request_rate():
+    import time
+    s = ManyToolsSession(6, delay=0.0)
+    t0 = time.monotonic()
+    await scan_session(s, oob=None, transport="stdio", check_ids=["path_traversal"],
+                       concurrency=6, rate=20.0)
+    elapsed = time.monotonic() - t0
+    # path_traversal: 2 probes/tool x 6 + calibration 2x6 = ~24 calls / 20 rps ~ 1.1s
+    assert elapsed >= 0.4  # throttled well above the unthrottled ~0s

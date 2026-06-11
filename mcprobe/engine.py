@@ -9,6 +9,24 @@ from mcprobe.models import ToolBaseline
 _CALIBRATION_CALLS = 2
 
 
+class _RateGate:
+    """Serialises probe starts to at most `rate` per second (None/0 = unlimited)."""
+    def __init__(self, rate):
+        self.interval = (1.0 / rate) if rate else 0.0
+        self._next = 0.0
+        self._lock = asyncio.Lock()
+
+    async def wait(self):
+        if not self.interval:
+            return
+        async with self._lock:
+            now = time.monotonic()
+            sleep_for = self._next - now
+            self._next = max(now, self._next) + self.interval
+        if sleep_for > 0:
+            await asyncio.sleep(sleep_for)
+
+
 def _aggregate_latency(latencies):
     # Minimum = the tool's intrinsic latency floor. A single slow outlier must NOT
     # inflate the baseline, which would raise the timing-oracle margin and mask real
@@ -17,7 +35,7 @@ def _aggregate_latency(latencies):
     return min(latencies) if latencies else 0.0
 
 
-async def _calibrate(session, tool):
+async def _calibrate(session, tool, gate=None):
     """Issue benign control calls to learn this tool's baseline latency + response.
 
     Uses the schema-valid baseline args (no payloads). Returns a ToolBaseline with
@@ -27,6 +45,8 @@ async def _calibrate(session, tool):
     args = build_baseline(tool.input_schema)
     latencies, response = [], ""
     for i in range(_CALIBRATION_CALLS):
+        if gate is not None:
+            await gate.wait()
         start = time.monotonic()
         try:
             r = await session.call_tool(tool.name, args)
@@ -40,7 +60,7 @@ async def _calibrate(session, tool):
 
 async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=None,
                        check_ids=None, oob_poll_interval=2.5, oob_timeout=20.0, calibrate=True,
-                       aggressive=False, concurrency=4):
+                       aggressive=False, concurrency=4, rate=None):
     ctx = CheckContext(oob=oob, transport=transport,
                        call_tool_unauth=call_tool_unauth, aggressive=aggressive)
     tools = await session.list_tools()
@@ -57,8 +77,10 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
 
     deferred = []
     sem = asyncio.Semaphore(max(1, concurrency))
+    gate = _RateGate(rate)
 
     async def _call(tool, probe):
+        await gate.wait()
         start = time.monotonic()
         try:
             resp = await session.call_tool(tool.name, probe.args)
@@ -86,7 +108,7 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
     for tool in tools:
         points = injection_points(tool)
         # Per-tool context: concurrent tools must NOT share a mutated baseline.
-        baseline = await _calibrate(session, tool) if (calibrate and points) else None
+        baseline = await _calibrate(session, tool, gate) if (calibrate and points) else None
         tool_ctx = replace(ctx, baseline=baseline)
         for point in points:
             for check in checks:
