@@ -10,7 +10,7 @@ _ERROR_SIGNS = re.compile(
     r"SQL syntax|SQLSTATE|ORA-\d{5}|mysql_fetch|mysql_num_rows|"
     r"unclosed quotation mark|quoted string not properly terminated|"
     r"you have an error in your SQL|near \"[^\"]*\": syntax error|"
-    r"PG::\w+Error|pg_query|psql:|SQLite3?::|Microsoft OLE DB|"
+    r"PG::\w+Error|pg_query|psql:.*(?:ERROR|FATAL)|SQLite3?::|Microsoft OLE DB|"
     r"ODBC SQL Server|Npgsql\.|System\.Data\.SqlClient",
     re.IGNORECASE,
 )
