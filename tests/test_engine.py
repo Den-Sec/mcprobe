@@ -365,3 +365,21 @@ async def test_engine_rate_limit_caps_request_rate():
     elapsed = time.monotonic() - t0
     # path_traversal: 2 probes/tool x 6 + calibration 2x6 = ~24 calls / 20 rps ~ 1.1s
     assert elapsed >= 0.4  # throttled well above the unthrottled ~0s
+
+
+@pytest.mark.asyncio
+async def test_engine_auth_bypass_fires_over_async_unauth():
+    class AuthSession:
+        async def list_tools(self):
+            return [ToolInfo("admin", "", {"type": "object",
+                    "properties": {"x": {"type": "string"}}, "required": ["x"]})]
+        async def call_tool(self, name, args):
+            return "secret data"          # authed call returns the protected data
+
+    async def unauth(name, args):          # ASYNC unauth callable, like Session.call_tool
+        return "secret data"               # no-auth ALSO returns it -> bypass
+
+    findings = await scan_session(AuthSession(), oob=None, transport="http",
+                                  call_tool_unauth=unauth, check_ids=["auth_bypass"],
+                                  calibrate=False)
+    assert any(f.check == "auth_bypass" and f.confidence.value == "confirmed" for f in findings)

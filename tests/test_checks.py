@@ -145,6 +145,7 @@ def test_auth_bypass_confirmed_when_unauth_succeeds():
     ctx = CheckContext(call_tool=lambda n, args: "secret data", oob=None, transport="http",
                        call_tool_unauth=lambda n, args: "secret data")
     probe = a.generate(point, ctx)[0]
+    probe.meta["unauth_response"] = "secret data"
     f = a.evaluate(probe, "secret data", ctx)
     assert f is not None and f.cwe == "CWE-306" and f.confidence.value == "confirmed"
 
@@ -166,6 +167,7 @@ def test_auth_bypass_firm_when_only_timestamp_differs():
     ctx = CheckContext(call_tool=lambda n, args: auth_resp, oob=None, transport="http",
                        call_tool_unauth=lambda n, args: unauth_resp)
     probe = a.generate(point, ctx)[0]
+    probe.meta["unauth_response"] = unauth_resp
     f = a.evaluate(probe, auth_resp, ctx)
     assert f is not None and f.cwe == "CWE-306" and f.confidence.value == "firm"
 
@@ -176,6 +178,7 @@ def test_auth_bypass_none_when_unauth_substantively_differs():
     ctx = CheckContext(call_tool=lambda n, args: '{"data":"secret"}', oob=None, transport="http",
                        call_tool_unauth=lambda n, args: '{"error":"401 unauthorized"}')
     probe = a.generate(point, ctx)[0]
+    probe.meta["unauth_response"] = '{"error":"401 unauthorized"}'
     assert a.evaluate(probe, '{"data":"secret"}', ctx) is None
 
 
@@ -188,6 +191,7 @@ def test_auth_bypass_none_when_only_record_id_differs():
     ctx = CheckContext(call_tool=lambda n, args: auth_resp, oob=None, transport="http",
                        call_tool_unauth=lambda n, args: unauth_resp)
     probe = a.generate(point, ctx)[0]
+    probe.meta["unauth_response"] = unauth_resp
     assert a.evaluate(probe, auth_resp, ctx) is None
 
 

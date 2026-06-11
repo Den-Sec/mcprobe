@@ -87,6 +87,12 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
         except Exception as e:
             resp = f"error: {e}"
         probe.meta["elapsed"] = time.monotonic() - start
+        if probe.meta.get("needs_unauth") and call_tool_unauth is not None:
+            await gate.wait()
+            try:
+                probe.meta["unauth_response"] = await call_tool_unauth(tool.name, probe.args)
+            except Exception:
+                probe.meta["unauth_response"] = None
         return resp
 
     def _dispatch(tool_ctx, check, probe, resp):

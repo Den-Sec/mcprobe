@@ -25,12 +25,9 @@ class AuthBypass:
         if ctx.transport != "http" or ctx.call_tool_unauth is None:
             return []
         return [Probe(check=self.id, point=point, payload="<no auth header>",
-                      args=dict(point.base_args))]
+                      args=dict(point.base_args), meta={"needs_unauth": True})]
     def evaluate(self, probe, response, ctx):
-        try:
-            unauth = ctx.call_tool_unauth(probe.point.tool, probe.args)
-        except Exception:
-            return None
+        unauth = probe.meta.get("unauth_response")
         if not unauth:
             return None
         if unauth == response:
