@@ -4,7 +4,7 @@
 **Version target:** v1.1 - "Hardening pass: depth, calibration, real-world fidelity"
 **Date:** 2026-06-08
 **Author:** Dennis Sepede (Den-Sec)
-**Status:** Draft - approved direction, pending implementation plan
+**Status:** COMPLETE (2026-06-10) - all milestones M1-M7 shipped. Every P0/P1/P2 requirement (R-A1..A6, R-B1..B4, R-C1..C3, R-D1, R-E1..E3, R-F1) is delivered and tested, or explicitly deferred where noted. 110 tests green. Per-milestone plans in `docs/superpowers/plans/2026-06-10-mcprobe-m{1..7}-*.md`; claim-to-test mapping in `docs/claims-matrix.md`. The unchecked `[ ]` boxes below are the original spec checklist, kept for the record - see the claims matrix for the live status.
 **Predecessors:** `docs/superpowers/specs/2026-06-08-mcprobe-design.md` (v1 spec), `docs/superpowers/plans/2026-06-08-mcprobe.md` (v1 plan)
 
 ---
