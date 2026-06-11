@@ -158,6 +158,27 @@ def test_auth_bypass_none_when_unauth_denied():
     assert a.evaluate(probe, "secret data", ctx) is None
 
 
+def test_auth_bypass_confirmed_when_only_timestamp_differs():
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    auth_resp = '{"user":"root","ts":"2026-06-10T10:00:00Z","data":"secret"}'
+    unauth_resp = '{"user":"root","ts":"2026-06-10T10:00:09Z","data":"secret"}'
+    ctx = CheckContext(call_tool=lambda n, args: auth_resp, oob=None, transport="http",
+                       call_tool_unauth=lambda n, args: unauth_resp)
+    probe = a.generate(point, ctx)[0]
+    f = a.evaluate(probe, auth_resp, ctx)
+    assert f is not None and f.cwe == "CWE-306"
+
+
+def test_auth_bypass_none_when_unauth_substantively_differs():
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    ctx = CheckContext(call_tool=lambda n, args: '{"data":"secret"}', oob=None, transport="http",
+                       call_tool_unauth=lambda n, args: '{"error":"401 unauthorized"}')
+    probe = a.generate(point, ctx)[0]
+    assert a.evaluate(probe, '{"data":"secret"}', ctx) is None
+
+
 def test_path_traversal_deep_sets_nested_path():
     from mcprobe.checks.path_traversal import PathTraversal
     from mcprobe.models import InjectionPoint
