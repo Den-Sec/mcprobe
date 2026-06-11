@@ -20,3 +20,17 @@ def test_aggressive_note_present_in_default_mode():
 def test_aggressive_note_absent_in_aggressive_mode():
     from mcprobe.cli import aggressive_note
     assert aggressive_note(True) is None
+
+
+def test_cli_parses_scale_flags():
+    args = build_parser().parse_args(
+        ["scan", "--http", "http://h/mcp", "--concurrency", "8", "--rate", "10",
+         "--oob-timeout", "30", "--oob-poll-interval", "1.5"])
+    assert args.concurrency == 8 and args.rate == 10.0
+    assert args.oob_timeout == 30.0 and args.oob_poll_interval == 1.5
+
+
+def test_cli_rejects_nonpositive_rate():
+    import pytest
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["scan", "--http", "http://h/mcp", "--rate", "0"])

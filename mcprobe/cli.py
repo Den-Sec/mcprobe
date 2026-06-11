@@ -7,6 +7,13 @@ import sys
 from mcprobe.report.render import to_json, to_sarif, to_markdown
 
 
+def _positive_float(s):
+    v = float(s)
+    if v <= 0:
+        raise argparse.ArgumentTypeError("must be > 0")
+    return v
+
+
 def aggressive_note(aggressive: bool) -> str | None:
     """Honest note for default (non-aggressive) scans: blocking time-based probes
     were skipped, so an empty report must not be read as 'secure'. None when
@@ -28,6 +35,14 @@ def build_parser():
     s.add_argument("--oob", choices=["local", "interactsh", "none"], default="local")
     s.add_argument("--aggressive", action="store_true",
                    help="also send blocking time-based (sleep) probes; default sends only non-blocking OOB/canary/pattern probes")
+    s.add_argument("--concurrency", type=int, default=4,
+                   help="max concurrent probe requests (default 4)")
+    s.add_argument("--rate", type=_positive_float, default=None,
+                   help="max requests/second (default unlimited)")
+    s.add_argument("--oob-timeout", type=float, default=20.0,
+                   help="seconds to poll for OOB callbacks (default 20)")
+    s.add_argument("--oob-poll-interval", type=float, default=2.5,
+                   help="OOB poll interval seconds (default 2.5)")
     s.add_argument("--output", choices=["console", "json", "sarif", "md"], default="console")
     return p
 
@@ -57,16 +72,25 @@ async def _run(args):
         if args.stdio:
             argv = shlex.split(args.stdio, posix=(os.name != "nt"))
             async with stdio_session(argv) as sess:
-                findings = await scan_session(sess, oob=oob, transport="stdio", aggressive=args.aggressive)
+                findings = await scan_session(sess, oob=oob, transport="stdio", aggressive=args.aggressive,
+                                              concurrency=args.concurrency, rate=args.rate,
+                                              oob_timeout=args.oob_timeout,
+                                              oob_poll_interval=args.oob_poll_interval)
         else:
             headers = dict(h.split(":", 1) for h in args.header)
             async with http_session(args.http, headers=headers) as sess:
                 if headers:
                     async with http_session(args.http, headers={}) as sess_unauth:
                         findings = await scan_session(sess, oob=oob, transport="http",
-                                                      call_tool_unauth=sess_unauth.call_tool, aggressive=args.aggressive)
+                                                      call_tool_unauth=sess_unauth.call_tool, aggressive=args.aggressive,
+                                                      concurrency=args.concurrency, rate=args.rate,
+                                                      oob_timeout=args.oob_timeout,
+                                                      oob_poll_interval=args.oob_poll_interval)
                 else:
-                    findings = await scan_session(sess, oob=oob, transport="http", aggressive=args.aggressive)
+                    findings = await scan_session(sess, oob=oob, transport="http", aggressive=args.aggressive,
+                                                  concurrency=args.concurrency, rate=args.rate,
+                                                  oob_timeout=args.oob_timeout,
+                                                  oob_poll_interval=args.oob_poll_interval)
     finally:
         if oob_cm:
             oob_cm.__exit__(None, None, None)
