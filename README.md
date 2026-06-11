@@ -98,6 +98,7 @@ The timing and info-leak oracles are where **FIRM** and **TENTATIVE** arise.
 | `path_traversal` | Path traversal                 | CWE-22   |
 | `auth_bypass`    | Missing authentication         | CWE-306  |
 | `info_leak`      | Secret / sensitive info leak   | CWE-200  |
+| `sql_injection`  | SQL injection                  | CWE-89   |
 
 ## Authorized testing only
 

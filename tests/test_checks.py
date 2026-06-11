@@ -332,3 +332,52 @@ def test_cmdi_emits_embed_variant_for_formatted_param():
     point = InjectionPoint("send", "to", {"to": "probe@mcprobe.example"}, "to")
     payloads = [p.payload for p in c.generate(point, ctx)]
     assert any(p.startswith("probe@mcprobe.example") and "curl" in p for p in payloads)
+
+
+# --- M7-T1: sql_injection ---
+from mcprobe.checks.sql_injection import SqlInjection
+
+
+def test_sqli_firm_on_error_signature_diff():
+    s = SqlInjection()
+    point = InjectionPoint("q", "name", {"name": "mcprobe"}, "name")
+    ctx = _ctx_with_baseline(0.1, response="ok normal output")
+    probe = [p for p in s.generate(point, ctx) if p.meta.get("error_based")][0]
+    f = s.evaluate(probe, "ERROR: near \"'\": syntax error", ctx)
+    assert f is not None and f.cwe == "CWE-89" and f.confidence.value == "firm"
+
+
+def test_sqli_suppressed_when_error_in_baseline():
+    s = SqlInjection()
+    point = InjectionPoint("q", "name", {"name": "mcprobe"}, "name")
+    ctx = _ctx_with_baseline(0.1, response="SQL syntax error appears even on benign input")
+    probe = [p for p in s.generate(point, ctx) if p.meta.get("error_based")][0]
+    assert s.evaluate(probe, "you have an error in your SQL syntax", ctx) is None
+
+
+def test_sqli_tentative_error_without_baseline():
+    s = SqlInjection()
+    point = InjectionPoint("q", "name", {"name": "mcprobe"}, "name")
+    ctx = CheckContext(call_tool=lambda n, a: "", oob=None, transport="stdio")  # no baseline
+    probe = [p for p in s.generate(point, ctx) if p.meta.get("error_based")][0]
+    f = s.evaluate(probe, "Warning: mysql_fetch_array() expects", ctx)
+    assert f is not None and f.confidence.value == "tentative"
+
+
+def test_sqli_time_based_only_when_aggressive():
+    s = SqlInjection()
+    point = InjectionPoint("q", "name", {"name": "mcprobe"}, "name")
+    default = CheckContext(call_tool=lambda n, a: "", oob=None, transport="stdio")
+    assert all(not p.meta.get("time_based") for p in s.generate(point, default))
+    aggr = CheckContext(call_tool=lambda n, a: "", oob=None, transport="stdio", aggressive=True)
+    assert any(p.meta.get("time_based") for p in s.generate(point, aggr))
+
+
+def test_sqli_time_based_firm_on_calibrated_delay():
+    s = SqlInjection()
+    point = InjectionPoint("q", "name", {"name": "mcprobe"}, "name")
+    ctx = _ctx_with_baseline(0.1)  # aggressive=True via helper
+    tprobe = [p for p in s.generate(point, ctx) if p.meta.get("time_based")][0]
+    tprobe.meta["elapsed"] = 5.1
+    f = s.evaluate(tprobe, "", ctx)
+    assert f is not None and f.confidence.value == "firm" and f.cwe == "CWE-89"
