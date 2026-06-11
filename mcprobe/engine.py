@@ -1,6 +1,7 @@
 import asyncio
 import math
 import time
+from dataclasses import replace
 from mcprobe.inject.mapper import injection_points, build_baseline
 from mcprobe.checks.base import REGISTRY, CheckContext
 from mcprobe.models import ToolBaseline
@@ -39,7 +40,7 @@ async def _calibrate(session, tool):
 
 async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=None,
                        check_ids=None, oob_poll_interval=2.5, oob_timeout=20.0, calibrate=True,
-                       aggressive=False):
+                       aggressive=False, concurrency=4):
     ctx = CheckContext(oob=oob, transport=transport,
                        call_tool_unauth=call_tool_unauth, aggressive=aggressive)
     tools = await session.list_tools()
@@ -55,27 +56,51 @@ async def scan_session(session, oob=None, transport="stdio", call_tool_unauth=No
             findings.append(finding)
 
     deferred = []
+    sem = asyncio.Semaphore(max(1, concurrency))
+
+    async def _call(tool, probe):
+        start = time.monotonic()
+        try:
+            resp = await session.call_tool(tool.name, probe.args)
+        except Exception as e:
+            resp = f"error: {e}"
+        probe.meta["elapsed"] = time.monotonic() - start
+        return resp
+
+    def _dispatch(tool_ctx, check, probe, resp):
+        # await-free -> atomic under asyncio's single thread
+        if probe.token and oob is not None:
+            deferred.append((check, probe, resp))
+        else:
+            collect(check.evaluate(probe, resp, tool_ctx))
+
+    async def _run_concurrent(tool, tool_ctx, check, probe):
+        async with sem:
+            resp = await _call(tool, probe)
+        _dispatch(tool_ctx, check, probe, resp)
+
+    timed = []   # time-based probes: run serially, uncontended (see below)
+    tasks = []
     for tool in tools:
         points = injection_points(tool)
-        # ctx.baseline is mutated per tool. Only token-bearing probes defer
-        # (cmd_injection OOB, ssrf) and they read ctx.oob, never ctx.baseline; keep
-        # baseline-consuming oracles non-token so they evaluate inline under the
-        # correct tool's baseline.
-        ctx.baseline = await _calibrate(session, tool) if (calibrate and points) else None
+        # Per-tool context: concurrent tools must NOT share a mutated baseline.
+        baseline = await _calibrate(session, tool) if (calibrate and points) else None
+        tool_ctx = replace(ctx, baseline=baseline)
         for point in points:
             for check in checks:
-                for probe in check.generate(point, ctx):
-                    start = time.monotonic()
-                    try:
-                        resp = await session.call_tool(tool.name, probe.args)
-                    except Exception as e:
-                        resp = f"error: {e}"
-                    probe.meta["elapsed"] = time.monotonic() - start
-                    if probe.token and oob is not None:
-                        # Remote OOB callbacks may arrive later; defer evaluation.
-                        deferred.append((check, probe, resp))
+                for probe in check.generate(point, tool_ctx):
+                    if probe.meta.get("time_based"):
+                        timed.append((tool, tool_ctx, check, probe))
                     else:
-                        collect(check.evaluate(probe, resp, ctx))
+                        tasks.append(_run_concurrent(tool, tool_ctx, check, probe))
+    if tasks:
+        await asyncio.gather(*tasks)
+    # Time-based probes depend on uncontended latency: a concurrent/queued call would
+    # inflate probe.meta["elapsed"] and false-fire the timing oracle. Run them strictly
+    # serially, after the concurrent phase, so each measures the tool's true latency.
+    for tool, tool_ctx, check, probe in timed:
+        resp = await _call(tool, probe)
+        _dispatch(tool_ctx, check, probe, resp)
 
     if deferred:
         # Poll-until-hit: outstanding OOB callbacks may land later than a fixed wait.

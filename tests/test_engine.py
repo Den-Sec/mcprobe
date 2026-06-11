@@ -315,3 +315,41 @@ async def test_engine_confirms_cmd_exe_oob():
                  if f.check == "cmd_injection" and f.confidence.value == "confirmed"]
     assert len(confirmed) == 1
     assert ("| curl" in confirmed[0].payload) or ("& curl" in confirmed[0].payload)
+
+
+class ManyToolsSession:
+    """N tools, each call sleeps a little - lets concurrency beat sequential."""
+    def __init__(self, n, delay=0.02):
+        self.n, self.delay = n, delay
+    async def list_tools(self):
+        return [ToolInfo(f"t{i}", "", {"type": "object",
+                "properties": {"path": {"type": "string"}}, "required": ["path"]})
+                for i in range(self.n)]
+    async def call_tool(self, name, args):
+        await asyncio.sleep(self.delay)
+        return "root:x:0:0:" if "etc/passwd" in args.get("path", "") else "ok"
+
+
+@pytest.mark.asyncio
+async def test_engine_concurrency_identical_findings():
+    seq = await scan_session(ManyToolsSession(6), oob=None, transport="stdio",
+                             check_ids=["path_traversal"], concurrency=1)
+    conc = await scan_session(ManyToolsSession(6), oob=None, transport="stdio",
+                              check_ids=["path_traversal"], concurrency=6)
+    seq_keys = {(f.check, f.tool, f.param) for f in seq}
+    conc_keys = {(f.check, f.tool, f.param) for f in conc}
+    assert seq_keys == conc_keys and len(conc_keys) == 6  # one traversal finding per tool
+
+
+@pytest.mark.asyncio
+async def test_engine_concurrency_is_faster():
+    import time
+    s = ManyToolsSession(8, delay=0.03)
+    t0 = time.monotonic()
+    await scan_session(s, oob=None, transport="stdio", check_ids=["path_traversal"], concurrency=1)
+    seq_t = time.monotonic() - t0
+    t0 = time.monotonic()
+    await scan_session(ManyToolsSession(8, delay=0.03), oob=None, transport="stdio",
+                       check_ids=["path_traversal"], concurrency=8)
+    conc_t = time.monotonic() - t0
+    assert conc_t < seq_t * 0.7  # materially faster
