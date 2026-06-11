@@ -2,7 +2,7 @@
 
 mcprobe's honesty contract (PRD v1.1, R-F1): every public claim in the README is
 backed by a passing automated test, or it is softened/removed. This file is the
-mapping. Run the suite with `python -m pytest -q` (118 tests as of v1.1).
+mapping. Run the suite with `python -m pytest -q` (119 tests as of v1.1).
 
 ## Confidence taxonomy → backing tests
 
@@ -43,7 +43,7 @@ mapping. Run the suite with `python -m pytest -q` (118 tests as of v1.1).
 | `--aggressive` gates blocking time-based probes; default is non-blocking only | `test_cmdi_default_omits_blocking_sleep_probes`, `test_cmdi_aggressive_enables_sleep_probes`, `test_engine_plumbs_aggressive_to_checks` |
 | Works over stdio (exercised end-to-end) | `test_stdio_session_lists_and_calls_tools` |
 | Streamable HTTP transport wired (session factory; CLI parses `--http`/headers) | `test_http_session_factory_exists`, `test_cli_parses_http_scan` |
-| Works over streamable HTTP (exercised end-to-end against a live in-process MCP server): list+call round-trip, confirmed path-traversal, confirmed auth-bypass via dual-session unauth, full CLI `--http` scan | `test_http_server_round_trip_list_and_call`, `test_scan_confirms_path_traversal_over_http`, `test_scan_confirms_auth_bypass_over_http_dual_session`, `test_cli_http_scan_confirms_findings_json` |
+| Works over streamable HTTP (exercised end-to-end against a live in-process MCP server): list+call round-trip, confirmed path-traversal, confirmed auth-bypass via dual-session unauth, full CLI `--http` scan (dual-session with `--header` and single-session without) | `test_http_server_round_trip_list_and_call`, `test_scan_confirms_path_traversal_over_http`, `test_scan_confirms_auth_bypass_over_http_dual_session`, `test_cli_http_scan_confirms_findings_json`, `test_cli_http_scan_no_header_single_session` |
 | Reports in console / JSON / SARIF / Markdown | `test_json_report_structure`, `test_sarif_is_valid_json_with_rules`, `test_markdown_contains_title_and_severity` |
 | All six checks registered (cmd_injection, ssrf, path_traversal, auth_bypass, info_leak, sql_injection) | `test_all_v1_checks_registered` |
 | Resource templates scanned: a templated URI param is a traversal injection point (R-A6) | `test_resource_tool_view_exposes_templates_as_tools`, `test_engine_confirms_traversal_in_resource_template` |

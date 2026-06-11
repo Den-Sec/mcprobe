@@ -82,3 +82,22 @@ async def test_cli_http_scan_confirms_findings_json(live_url):
     confirmed = {f["check"] for f in data["findings"] if f["confidence"] == "confirmed"}
     assert "path_traversal" in confirmed   # single-session probes traverse HTTP
     assert "auth_bypass" in confirmed       # dual-session unauth differential wired in the CLI
+
+
+@pytest.mark.asyncio
+async def test_cli_http_scan_no_header_single_session(live_url):
+    # The no-`--header` CLI path takes the single-session else branch (no unauth
+    # differential). Proves that branch works over live HTTP AND is distinct from the
+    # dual-session one: path-traversal still confirms, but auth-bypass cannot (it needs
+    # the unauth session, which only the --header branch opens).
+    from mcprobe.cli import build_parser, _run
+    args = build_parser().parse_args(
+        ["scan", "--http", live_url, "--oob", "none", "--output", "json"])
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        await _run(args)
+    out = buf.getvalue()
+    data = json.loads(out[out.index("{"):])
+    confirmed = {f["check"] for f in data["findings"] if f["confidence"] == "confirmed"}
+    assert "path_traversal" in confirmed       # single-session probes still traverse HTTP
+    assert "auth_bypass" not in confirmed       # no unauth session -> no differential (distinct branch)
