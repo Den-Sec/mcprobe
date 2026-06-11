@@ -33,6 +33,8 @@ def build_parser():
     g.add_argument("--http", help="streamable HTTP MCP endpoint URL")
     s.add_argument("--header", action="append", default=[], help="HTTP header k:v (repeatable)")
     s.add_argument("--oob", choices=["local", "interactsh", "none"], default="local")
+    s.add_argument("--interactsh-server", default="oast.fun",
+                   help="interactsh/OAST server domain for --oob interactsh (default oast.fun)")
     s.add_argument("--aggressive", action="store_true",
                    help="also send blocking time-based (sleep) probes; default sends only non-blocking OOB/canary/pattern probes")
     s.add_argument("--concurrency", type=int, default=4,
@@ -61,14 +63,9 @@ async def _run(args):
         oob_cm = LocalOOB()
         oob = oob_cm.__enter__()
     elif args.oob == "interactsh":
-        try:
-            from mcprobe.oob.interactsh import InteractshOOB
-            from interactsh_client import InteractshClient  # injectable client
-        except ImportError:
-            raise SystemExit("interactsh selected but no interactsh client is installed. "
-                             "Install a client exposing register()->domain and poll()->list, "
-                             "or use --oob local.")
-        oob = InteractshOOB(InteractshClient())
+        from mcprobe.oob.interactsh import InteractshOOB
+        from mcprobe.oob.interactsh_client import InteractshClient
+        oob = InteractshOOB(InteractshClient(server=args.interactsh_server))
     try:
         if args.stdio:
             argv = shlex.split(args.stdio, posix=(os.name != "nt"))
