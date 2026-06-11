@@ -33,6 +33,8 @@ class ResourceToolView:
         return tools
 
     async def call_tool(self, name, args):
+        # Precondition: list_tools() must run first to populate self._templates.
+        # scan_session always calls list_tools() before any call_tool(), so this holds.
         tmpl = self._templates[name]
         uri = tmpl
         for key, value in args.items():
