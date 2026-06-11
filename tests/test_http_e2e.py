@@ -35,3 +35,14 @@ async def test_http_server_round_trip_list_and_call(live_url):
         assert {"ping", "read_doc", "whoami"} <= names
         out = await sess.call_tool("ping", {"host": "example.com"})
         assert "pinging example.com" in out
+
+
+@pytest.mark.asyncio
+async def test_scan_confirms_path_traversal_over_http(live_url):
+    async with http_session(live_url, headers={"Authorization": "Bearer x"}) as sess:
+        findings = await scan_session(sess, oob=None, transport="http",
+                                      check_ids=["path_traversal"])
+    confirmed = {(f.check, f.param) for f in findings if f.confidence.value == "confirmed"}
+    assert ("path_traversal", "config.path") in confirmed   # nested object param
+    assert ("path_traversal", "paths[0]") in confirmed       # array item param
+    assert ("path_traversal", "path") in confirmed           # enum-gated tool (read_mode)
