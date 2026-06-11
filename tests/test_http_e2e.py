@@ -61,3 +61,24 @@ async def test_scan_confirms_auth_bypass_over_http_dual_session(live_url):
                                       check_ids=["auth_bypass"], calibrate=False)
     assert any(f.check == "auth_bypass" and f.confidence.value == "confirmed"
                for f in findings)
+
+
+@pytest.mark.asyncio
+async def test_cli_http_scan_confirms_findings_json(live_url):
+    # Drive the real CLI entrypoint (_run) over live HTTP with --header, so the
+    # with-headers branch (authed + unauth dual session) runs end to end and emits
+    # JSON. --oob none avoids starting a local OOB listener. Captures stdout (the
+    # server stack is logging-silenced by the harness, so stdout is just the
+    # banner + JSON).
+    from mcprobe.cli import build_parser, _run
+    args = build_parser().parse_args(
+        ["scan", "--http", live_url, "--header", "Authorization:Bearer x",
+         "--oob", "none", "--output", "json"])
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        await _run(args)
+    out = buf.getvalue()
+    data = json.loads(out[out.index("{"):])   # skip the "[!] authorized testing" banner
+    confirmed = {f["check"] for f in data["findings"] if f["confidence"] == "confirmed"}
+    assert "path_traversal" in confirmed   # single-session probes traverse HTTP
+    assert "auth_bypass" in confirmed       # dual-session unauth differential wired in the CLI
