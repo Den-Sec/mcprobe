@@ -146,7 +146,7 @@ def test_auth_bypass_confirmed_when_unauth_succeeds():
                        call_tool_unauth=lambda n, args: "secret data")
     probe = a.generate(point, ctx)[0]
     f = a.evaluate(probe, "secret data", ctx)
-    assert f is not None and f.cwe == "CWE-306"
+    assert f is not None and f.cwe == "CWE-306" and f.confidence.value == "confirmed"
 
 def test_auth_bypass_none_when_unauth_denied():
     a = AuthBypass()
@@ -158,7 +158,7 @@ def test_auth_bypass_none_when_unauth_denied():
     assert a.evaluate(probe, "secret data", ctx) is None
 
 
-def test_auth_bypass_confirmed_when_only_timestamp_differs():
+def test_auth_bypass_firm_when_only_timestamp_differs():
     a = AuthBypass()
     point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
     auth_resp = '{"user":"root","ts":"2026-06-10T10:00:00Z","data":"secret"}'
@@ -167,7 +167,7 @@ def test_auth_bypass_confirmed_when_only_timestamp_differs():
                        call_tool_unauth=lambda n, args: unauth_resp)
     probe = a.generate(point, ctx)[0]
     f = a.evaluate(probe, auth_resp, ctx)
-    assert f is not None and f.cwe == "CWE-306"
+    assert f is not None and f.cwe == "CWE-306" and f.confidence.value == "firm"
 
 
 def test_auth_bypass_none_when_unauth_substantively_differs():
@@ -177,6 +177,18 @@ def test_auth_bypass_none_when_unauth_substantively_differs():
                        call_tool_unauth=lambda n, args: '{"error":"401 unauthorized"}')
     probe = a.generate(point, ctx)[0]
     assert a.evaluate(probe, '{"data":"secret"}', ctx) is None
+
+
+def test_auth_bypass_none_when_only_record_id_differs():
+    # Different records (different 'id' value) must NOT be treated as a bypass.
+    a = AuthBypass()
+    point = InjectionPoint("admin", "x", {"x": "mcprobe"}, "x")
+    auth_resp = '{"id":"user-1001","name":"alice","role":"viewer"}'
+    unauth_resp = '{"id":"user-9999","name":"alice","role":"viewer"}'
+    ctx = CheckContext(call_tool=lambda n, args: auth_resp, oob=None, transport="http",
+                       call_tool_unauth=lambda n, args: unauth_resp)
+    probe = a.generate(point, ctx)[0]
+    assert a.evaluate(probe, auth_resp, ctx) is None
 
 
 def test_path_traversal_deep_sets_nested_path():
