@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.streamable_http import create_mcp_http_client, streamable_http_client
 
 from mcprobe.models import ToolInfo
 
@@ -56,7 +56,13 @@ async def stdio_session(command):
 
 @asynccontextmanager
 async def http_session(url, headers=None):
-    async with streamablehttp_client(url, headers=headers or {}) as (read, write, *_):
-        async with ClientSession(read, write) as cs:
-            await cs.initialize()
-            yield Session(cs)
+    # The SDK's streamable_http_client takes headers via a caller-owned httpx client
+    # (the old headers= kwarg is gone). create_mcp_http_client applies the same MCP
+    # defaults the old path used (30s timeout, 300s SSE read, follow_redirects), so
+    # routing headers through it is behaviour-preserving - not a bare AsyncClient,
+    # which would default to a ~5s read timeout and break long-lived streams.
+    async with create_mcp_http_client(headers=headers or {}) as http_client:
+        async with streamable_http_client(url, http_client=http_client) as (read, write, *_):
+            async with ClientSession(read, write) as cs:
+                await cs.initialize()
+                yield Session(cs)
